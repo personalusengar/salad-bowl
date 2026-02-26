@@ -138,7 +138,7 @@ const globalStyles = `
     .page-header p{font-size:0.95rem}
     .nav-inner{flex-direction:column;height:auto!important;padding:10px 0;gap:4px!important}
     .nav-links-wrap{width:100%;justify-content:center!important;gap:0!important}
-    .nav-link{padding:6px 10px;font-size:0.82rem}
+    .nav-link{padding:8px 14px;font-size:0.92rem}
     .hero-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
     .library-filters{flex-direction:column;align-items:stretch!important}
     .library-filters .filter-select{width:100%;min-width:0}
@@ -163,7 +163,7 @@ const globalStyles = `
   }
   @media(max-width:480px){
     .hero-stats{grid-template-columns:1fr 1fr!important}
-    .nav-link{padding:5px 8px;font-size:0.78rem}
+    .nav-link{padding:7px 12px;font-size:0.88rem}
     .build-cols{gap:16px!important}
     .build-card{padding:24px 16px 20px!important}
   }
