@@ -128,6 +128,45 @@ const globalStyles = `
   .page-header h1{font-size:clamp(2rem,4.5vw,3.2rem);margin-bottom:14px;position:relative}
   .page-header p{font-size:1.1rem;opacity:0.88;max-width:540px;margin:0 auto;position:relative;line-height:1.6}
   .glass-card{background:rgba(255,255,255,0.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.5);box-shadow:0 8px 32px rgba(0,0,0,0.06)}
+
+  /* Mobile Responsive */
+  @media(max-width:768px){
+    .container{padding:0 16px}
+    .section{padding:48px 0}
+    .page-header{padding:56px 16px 44px}
+    .page-header h1{font-size:1.8rem}
+    .page-header p{font-size:0.95rem}
+    .nav-inner{flex-direction:column;height:auto!important;padding:10px 0;gap:4px!important}
+    .nav-links-wrap{width:100%;justify-content:center!important;gap:0!important}
+    .nav-link{padding:6px 10px;font-size:0.82rem}
+    .hero-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+    .library-filters{flex-direction:column;align-items:stretch!important}
+    .library-filters .filter-select{width:100%;min-width:0}
+    .library-cols{grid-template-columns:1fr!important}
+    .plans-grid{grid-template-columns:1fr!important}
+    .build-cols{grid-template-columns:1fr!important}
+    .form-grid-2{grid-template-columns:1fr!important}
+    .dash-stats-4{grid-template-columns:repeat(2,1fr)!important}
+    .dash-grid-2{grid-template-columns:1fr!important}
+    .footer-inner{flex-direction:column;text-align:center;gap:28px!important}
+    .footer-links{justify-content:center}
+    .why-grid{grid-template-columns:1fr!important}
+    .team-row{flex-direction:column;align-items:flex-start!important;gap:12px!important}
+    .team-row-label{width:auto!important}
+    .team-people{gap:14px!important}
+    .build-form-wrap{padding:28px 20px!important}
+    .build-card{padding:28px 20px 24px!important}
+    .ask-header{padding:16px!important}
+    .ask-input-wrap{padding:12px 16px!important}
+    .ask-input-inner{flex-direction:row;gap:8px}
+    .chat-area{padding:16px!important}
+  }
+  @media(max-width:480px){
+    .hero-stats{grid-template-columns:1fr 1fr!important}
+    .nav-link{padding:5px 8px;font-size:0.78rem}
+    .build-cols{gap:16px!important}
+    .build-card{padding:24px 16px 20px!important}
+  }
 `
 
 // Logo
@@ -164,12 +203,12 @@ const Nav = ({ page, setPage, role, setRole, teamRef }: {
       transition: 'all 0.35s ease',
       boxShadow: scrolled ? '0 4px 24px rgba(0,0,0,0.06)' : 'none',
     }}>
-      <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68, gap: 8, flexWrap: 'wrap' }}>
+      <div className="container nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68, gap: 8, flexWrap: 'wrap' }}>
         <button onClick={() => setPage('home')} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none' }}>
           <Logo size={38} />
           <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '1.3rem', color: C.olive, letterSpacing: '-0.3px' }}>Salad Bowl</span>
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <div className="nav-links-wrap" style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           {([['home', 'Home'], ['ask', 'Guide Me'], ['plans', 'Plans'], ['connect', 'Build With Us']] as [string, string][]).map(([p, label]) => (
             <button key={p} className={`nav-link ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{label}</button>
           ))}
@@ -196,9 +235,9 @@ const Nav = ({ page, setPage, role, setRole, teamRef }: {
 const TeamSection = ({ teamRef }: { teamRef: React.RefObject<HTMLDivElement> }) => {
   const reveal = useReveal()
   const Row = ({ label, people, color }: { label: string; people: TeamPerson[]; color: string }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: `1px solid ${C.olive}0c` }}>
-      <span style={{ width: 85, fontSize: '0.68rem', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color, flexShrink: 0 }}>{label}</span>
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+    <div className="team-row" style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: `1px solid ${C.olive}0c` }}>
+      <span className="team-row-label" style={{ width: 85, fontSize: '0.68rem', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color, flexShrink: 0 }}>{label}</span>
+      <div className="team-people" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
         {people.map(p => (
           <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${C.sand},${C.cream})`, border: `1.5px solid ${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
@@ -320,7 +359,7 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
               View Plans
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginTop: 56 }}>
+          <div className="hero-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,auto)', gap: 16, justifyContent: 'center', marginTop: 56 }}>
             <StatBadge num={`${_modules.filter(m => m.isPublished).length}`} label="Modules" delay={0.5} />
             <StatBadge num="4" label="Session Journey" delay={0.6} />
             <StatBadge num="5" label="CASEL Tags" delay={0.7} />
@@ -332,10 +371,10 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
       {/* Filter + Library */}
       <div className="container" style={{ paddingTop: 56 }}>
         <div ref={libraryReveal.ref} style={libraryReveal.style}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+          <div className="library-filters" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
             <h2 style={{ fontSize: '1.8rem', color: C.ink }}>Content Library</h2>
             {/* Clean dropdown filters */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div className="library-filters" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <select className="filter-select" value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
                 <option value="all">All Ages</option>
                 <option value="elementary">Elementary</option>
@@ -378,7 +417,7 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
             </div>
           )
           return (
-            <div style={{
+            <div className="library-cols" style={{
               display: 'grid',
               gridTemplateColumns: cols.length === 1 ? '1fr' : `repeat(${cols.length},1fr)`,
               gap: 28, alignItems: 'start',
@@ -448,7 +487,7 @@ const WhySection = () => {
             Whole-child wellbeing, designed for real classrooms
           </h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 24 }}>
+        <div className="why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 24 }}>
           {features.map((f, i) => (
             <div key={i} className="card-hover" style={{
               background: C.white, borderRadius: 20, padding: '36px 30px',
@@ -530,7 +569,7 @@ const PlansPage = ({ setPage }: { setPage: (p: string) => void }) => {
         <p>Start small, grow deep. Every garden begins with a sprout.</p>
       </div>
       <div className="container section" ref={reveal.ref} style={reveal.style}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 32, maxWidth: 880, margin: '0 auto' }}>
+        <div className="plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 32, maxWidth: 880, margin: '0 auto' }}>
           {/* Sprout - Free */}
           <div style={{
             background: C.white, borderRadius: 24, padding: '44px 36px',
@@ -630,7 +669,7 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
   return (
     <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 68px)' }}>
       {/* Header */}
-      <div style={{
+      <div className="ask-header" style={{
         background: `linear-gradient(135deg,${C.olive}10,${C.teal}08)`,
         padding: '24px 28px', borderBottom: `1px solid ${C.sand}`,
         display: 'flex', alignItems: 'center', gap: 14,
@@ -650,7 +689,7 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px', background: C.bg }}>
+      <div className="chat-area" style={{ flex: 1, overflowY: 'auto', padding: '28px', background: C.bg }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           {messages.map((msg, i) => (
             <div key={i} style={{
@@ -704,8 +743,8 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
       </div>
 
       {/* Input */}
-      <div style={{ borderTop: `1px solid ${C.sand}`, padding: '16px 28px', background: C.white }}>
-        <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', gap: 12 }}>
+      <div className="ask-input-wrap" style={{ borderTop: `1px solid ${C.sand}`, padding: '16px 28px', background: C.white }}>
+        <div className="ask-input-inner" style={{ maxWidth: 680, margin: '0 auto', display: 'flex', gap: 12 }}>
           <input
             className="input-field"
             placeholder="My students are feeling restless after lunch..."
@@ -769,11 +808,11 @@ const BuildWithUsPage = () => {
       </div>
       <div className="container section" style={{ maxWidth: 1020 }}>
         {/* Three Columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <div className="build-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {cards.map(card => {
             const isActive = activeCard === card.id
             return (
-              <div key={card.id} onClick={() => selectCard(card.id)} style={{
+              <div key={card.id} className="build-card" onClick={() => selectCard(card.id)} style={{
                 background: isActive ? card.color : C.white,
                 borderRadius: 24, padding: '40px 28px 36px', textAlign: 'center',
                 border: `2px solid ${isActive ? card.color : C.sand}`,
@@ -841,7 +880,7 @@ const BuildWithUsPage = () => {
               <button className="btn-secondary" style={{ marginTop: 28 }} onClick={() => { setActiveCard(null); setSubmitted(false) }}>Done</button>
             </div>
           ) : active && (
-            <div style={{
+            <div className="build-form-wrap" style={{
               background: C.white, borderRadius: 24, padding: '40px 44px',
               border: `2px solid ${active.color}20`, boxShadow: `0 4px 24px ${active.color}0c`,
               maxWidth: 620, margin: '0 auto',
@@ -851,7 +890,7 @@ const BuildWithUsPage = () => {
                 <h3 style={{ fontFamily: "'Playfair Display',serif", color: active.color, fontSize: '1.2rem', fontWeight: 700 }}>{active.title}</h3>
               </div>
               <p style={{ color: '#999', fontSize: '0.88rem', marginBottom: 28 }}>Fill out the form and we'll reach out.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
+              <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
               </div>
@@ -900,7 +939,7 @@ const TeacherDashboard = () => {
           <Stat label="Est. Minutes of Practice" value={totalTime} color={C.terra} icon={'\u23F1'} />
           <Stat label="Modules Engaged" value={Object.keys(byModule).length} color={C.teal} icon={'\u{1F4DA}'} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
+        <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
           <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
             <h3 style={{ color: C.olive, marginBottom: 22 }}>Most Completed Modules</h3>
             {topModules.length ? topModules.map(([id, count]) => {
@@ -993,7 +1032,7 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
         <p>Manage content, analytics, and submissions.</p>
       </div>
       <div className="container section">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18, marginBottom: 40 }}>
+        <div className="dash-stats-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18, marginBottom: 40 }}>
           {([['Total Modules', _modules.length, '\u{1F4E6}'], ['Published', _modules.filter(m => m.isPublished).length, '\u2705'], ['Feedback', allFeedback.length, '\u{1F4AC}'], ['Team Submissions', allTeam.length, '\u{1F465}']] as [string, number, string][]).map(([l, v, icon]) => (
             <div key={l} style={{ background: C.white, borderRadius: 18, padding: '26px 24px', textAlign: 'center', border: `1px solid ${C.sand}` }}>
               <div style={{ fontSize: '1.2rem', marginBottom: 6 }}>{icon}</div>
@@ -1111,7 +1150,7 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
       color: 'rgba(255,255,255,0.65)', padding: '64px 24px 36px', position: 'relative', overflow: 'hidden',
     }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg,transparent,${C.teal}44,${C.saffron}44,transparent)` }} />
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 40 }}>
+      <div className="container footer-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 40 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <Logo size={36} />
@@ -1119,7 +1158,7 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
           </div>
           <p style={{ maxWidth: 300, fontSize: '0.9rem', lineHeight: 1.7 }}>A cultural wellness studio for schools - rooted in SEL, community, and whole-child flourishing.</p>
         </div>
-        <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
+        <div className="footer-links" style={{ display: 'flex', gap: 48, flexWrap: 'wrap' }}>
           <div>
             <div style={{ color: 'white', fontWeight: 700, marginBottom: 16, fontSize: '0.78rem', letterSpacing: 1.5, textTransform: 'uppercase' }}>Explore</div>
             <FLink onClick={() => setPage('home')}>Home</FLink>
