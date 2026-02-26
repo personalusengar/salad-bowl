@@ -1,0 +1,26 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sql } from '@vercel/postgres';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    if (req.method === 'POST') {
+      const { name, email, role, organization, contribution, excitement, skills, wantsUpdates, phone } = req.body;
+      if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
+      await sql`
+        INSERT INTO team_interest (name, email, role, organization, contribution, excitement, skills, wants_updates, phone)
+        VALUES (${name}, ${email}, ${role || ''}, ${organization || ''}, ${contribution || ''}, ${excitement || ''}, ${skills || ''}, ${wantsUpdates || false}, ${phone || ''})
+      `;
+      return res.status(201).json({ ok: true });
+    }
+
+    const { rows } = await sql`SELECT * FROM team_interest ORDER BY created_at DESC`;
+    return res.status(200).json(rows);
+  } catch (err) {
+    return res.status(500).json({ error: String(err) });
+  }
+}
