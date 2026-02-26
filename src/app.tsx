@@ -170,7 +170,7 @@ const Nav = ({ page, setPage, role, setRole, teamRef }: {
           <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '1.3rem', color: C.olive, letterSpacing: '-0.3px' }}>Salad Bowl</span>
         </button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          {([['home', 'Home'], ['ask', 'Guide Me'], ['plans', 'Plans'], ['connect', 'Connect']] as [string, string][]).map(([p, label]) => (
+          {([['home', 'Home'], ['ask', 'Guide Me'], ['plans', 'Plans'], ['connect', 'Build With Us']] as [string, string][]).map(([p, label]) => (
             <button key={p} className={`nav-link ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{label}</button>
           ))}
           <button className="nav-link" onClick={scrollToTeam} style={{ color: C.teal, fontWeight: 600 }}>Our Team</button>
@@ -727,135 +727,145 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
   )
 }
 
-// Connect Page - Consolidated: Share Experience + Join Team (tabbed)
-const ConnectPage = () => {
-  const [tab, setTab] = useState<'share' | 'join'>('share')
-  // Share state
-  const [msg, setMsg] = useState('')
-  const [emotional, setEmotional] = useState('')
-  const [shareSubmitted, setShareSubmitted] = useState(false)
+// Build With Us Page — 3-column cards, click to expand form
+const BuildWithUsPage = () => {
+  const [activeCard, setActiveCard] = useState<string | null>(null)
+  const [form, setForm] = useState({ name: '', email: '', organization: '', message: '' })
+  const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  // Join state
-  const [form, setForm] = useState({ name: '', email: '', role: '', organization: '', contribution: '', excitement: '', skills: '', wantsUpdates: 'yes', phone: '' })
-  const [joinSubmitted, setJoinSubmitted] = useState(false)
-
+  const formRef = useRef<HTMLDivElement>(null)
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
 
-  const handleShare = async () => {
-    if (!msg.trim() || submitting) return
+  const handleSubmit = async () => {
+    if (!form.name || !form.email || !activeCard || submitting) return
     setSubmitting(true)
-    // Save to in-memory (local fallback)
-    _feedback.push({ id: Date.now().toString(), message: msg, emotionalState: emotional || null, createdAt: new Date() })
-    // Persist to API
-    try { await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, emotionalState: emotional || null }) }) } catch {}
+    _teamInterest.push({ id: Date.now().toString(), name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: '', excitement: form.message, skills: '', wantsUpdates: true, phone: '', createdAt: new Date() })
+    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: '', excitement: form.message, skills: '', wantsUpdates: true, phone: '' }) }) } catch {}
     setSubmitting(false)
-    setShareSubmitted(true)
+    setSubmitted(true)
   }
-  const handleJoin = async () => {
-    if (!form.name || !form.email || submitting) return
-    setSubmitting(true)
-    // Save to in-memory (local fallback)
-    _teamInterest.push({ id: Date.now().toString(), ...form, wantsUpdates: form.wantsUpdates === 'yes', createdAt: new Date() })
-    // Persist to API
-    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, wantsUpdates: form.wantsUpdates === 'yes' }) }) } catch {}
-    setSubmitting(false)
-    setJoinSubmitted(true)
+
+  const selectCard = (id: string) => {
+    const isOpen = activeCard === id
+    setActiveCard(isOpen ? null : id)
+    setSubmitted(false)
+    setForm({ name: '', email: '', organization: '', message: '' })
+    if (!isOpen) setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
   }
+
+  const cards = [
+    { id: 'partner', emoji: '\u{1F3EB}', title: 'Partner With Us', subtitle: 'Schools & Programs', description: 'For schools, afterschool programs, charter networks, and organized learning communities interested in launching a pilot.', color: C.olive, gradient: `linear-gradient(135deg,${C.olive},${C.oliveL})`, cta: 'Start a Pilot' },
+    { id: 'join', emoji: '\u{1F331}', title: 'Join Our Team', subtitle: 'Educators & Builders', description: 'For educators, cultural practitioners, designers, and operators who want to help shape the future of embodied SEL.', color: C.teal, gradient: `linear-gradient(135deg,${C.teal},${C.tealL})`, cta: 'Express Interest' },
+    { id: 'backer', emoji: '\u{1F4B0}', title: 'Become an Early Backer', subtitle: 'Angels & Supporters', description: 'We are raising $100,000 at pre-seed to move from pilot validation to recurring institutional revenue. We welcome aligned angels and small early checks.', color: C.saffron, gradient: `linear-gradient(135deg,${C.saffron},${C.saffronL})`, cta: 'Back Salad Bowl' },
+  ]
+
+  const active = cards.find(c => c.id === activeCard)
 
   return (
     <div className="fade-up">
       <div className="page-header" style={{ background: `linear-gradient(155deg,${C.terra}dd,${C.saffron}bb,${C.olive}cc)`, backgroundSize: '200% 200%', animation: 'gradientMove 8s ease infinite' }}>
-        <h1>Connect with Us</h1>
-        <p>Share your experience or join the Salad Bowl community.</p>
+        <h1>Build With Us</h1>
+        <p style={{ maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>Salad Bowl is growing through educators, institutional partners, and early believers who see the need for culturally grounded, embodied SEL. If you feel aligned, we'd love to connect.</p>
       </div>
-      <div className="container section" style={{ maxWidth: 680 }}>
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 36, background: C.sand, borderRadius: 99, padding: 4, width: 'fit-content', margin: '0 auto 36px' }}>
-          {([['share', 'Share Experience'], ['join', 'Join the Team']] as ['share' | 'join', string][]).map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{
-              padding: '10px 28px', borderRadius: 99, border: 'none',
-              background: tab === id ? C.white : 'transparent',
-              color: tab === id ? C.ink : '#999',
-              fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.25s',
-              boxShadow: tab === id ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-            }}>{label}</button>
-          ))}
+      <div className="container section" style={{ maxWidth: 1020 }}>
+        {/* Three Columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          {cards.map(card => {
+            const isActive = activeCard === card.id
+            return (
+              <div key={card.id} onClick={() => selectCard(card.id)} style={{
+                background: isActive ? card.color : C.white,
+                borderRadius: 24, padding: '40px 28px 36px', textAlign: 'center',
+                border: `2px solid ${isActive ? card.color : C.sand}`,
+                boxShadow: isActive ? `0 8px 32px ${card.color}28` : '0 2px 12px rgba(0,0,0,0.04)',
+                transition: 'all 0.35s cubic-bezier(.22,1,.36,1)',
+                cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                transform: isActive ? 'translateY(-4px)' : 'translateY(0)',
+              }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.borderColor = card.color + '66'; (e.currentTarget as HTMLElement).style.boxShadow = `0 6px 24px ${card.color}18` } }}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.borderColor = C.sand; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)' } }}>
+                {/* Top accent line */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: isActive ? 'rgba(255,255,255,0.3)' : card.gradient, transition: 'background 0.35s' }} />
+                {/* Emoji */}
+                <div style={{
+                  width: 64, height: 64, borderRadius: 20, margin: '0 auto 20px',
+                  background: isActive ? 'rgba(255,255,255,0.2)' : `${card.color}0d`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem',
+                  transition: 'background 0.35s',
+                }}>{card.emoji}</div>
+                {/* Subtitle tag */}
+                <div style={{
+                  display: 'inline-block', padding: '4px 14px', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700,
+                  letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 14,
+                  background: isActive ? 'rgba(255,255,255,0.2)' : `${card.color}12`,
+                  color: isActive ? 'rgba(255,255,255,0.9)' : card.color,
+                  transition: 'all 0.35s',
+                }}>{card.subtitle}</div>
+                {/* Title */}
+                <h3 style={{
+                  fontFamily: "'Playfair Display',serif", fontSize: '1.35rem', fontWeight: 700,
+                  color: isActive ? 'white' : card.color, marginBottom: 12, transition: 'color 0.35s',
+                }}>{card.title}</h3>
+                {/* Description */}
+                <p style={{
+                  color: isActive ? 'rgba(255,255,255,0.85)' : '#666',
+                  fontSize: '0.92rem', lineHeight: 1.7, marginBottom: 24, transition: 'color 0.35s',
+                }}>{card.description}</p>
+                {/* CTA */}
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '12px 28px', borderRadius: 60, fontWeight: 700, fontSize: '0.9rem',
+                  background: isActive ? 'white' : card.gradient,
+                  color: isActive ? card.color : 'white',
+                  boxShadow: isActive ? '0 4px 16px rgba(0,0,0,0.12)' : `0 4px 16px ${card.color}22`,
+                  transition: 'all 0.35s',
+                }}>
+                  {isActive ? '\u2715  Close' : card.cta}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
-        {/* Share Tab */}
-        {tab === 'share' && (
-          shareSubmitted ? (
-            <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              <div style={{ fontSize: '4rem', marginBottom: 24 }}>{'\u{1F33B}'}</div>
-              <h2 style={{ color: C.olive, marginBottom: 14, fontSize: '2rem' }}>Thank you</h2>
-              <p style={{ color: '#777', fontSize: '1.1rem', lineHeight: 1.6 }}>Your reflection has been received with care.</p>
-              <button className="btn-secondary" style={{ marginTop: 32 }} onClick={() => setShareSubmitted(false)}>Share Again</button>
+        {/* Expandable Form */}
+        <div ref={formRef} style={{
+          maxHeight: activeCard ? 600 : 0, opacity: activeCard ? 1 : 0,
+          overflow: 'hidden', transition: 'max-height 0.5s cubic-bezier(.22,1,.36,1), opacity 0.4s ease',
+          marginTop: activeCard ? 36 : 0,
+        }}>
+          {submitted ? (
+            <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: 20 }}>{'\u{1F957}'}</div>
+              <h2 style={{ color: active?.color || C.olive, marginBottom: 12, fontSize: '1.8rem' }}>Thank you!</h2>
+              <p style={{ color: '#777', fontSize: '1.05rem', lineHeight: 1.6 }}>We'll be in touch soon. Thank you for believing in embodied SEL.</p>
+              <button className="btn-secondary" style={{ marginTop: 28 }} onClick={() => { setActiveCard(null); setSubmitted(false) }}>Done</button>
             </div>
-          ) : (
-            <div className="glass-card" style={{ borderRadius: 24, padding: '44px 40px' }}>
-              <div style={{ marginBottom: 28 }}>
-                <label style={{ display: 'block', fontWeight: 700, marginBottom: 12, color: C.ink, fontSize: '0.95rem' }}>Your reflection *</label>
-                <textarea className="input-field" rows={6} placeholder="What has this practice meant to you or your students?" value={msg} onChange={e => setMsg(e.target.value)} style={{ resize: 'vertical' }} />
+          ) : active && (
+            <div style={{
+              background: C.white, borderRadius: 24, padding: '40px 44px',
+              border: `2px solid ${active.color}20`, boxShadow: `0 4px 24px ${active.color}0c`,
+              maxWidth: 620, margin: '0 auto',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 99, background: active.gradient }} />
+                <h3 style={{ fontFamily: "'Playfair Display',serif", color: active.color, fontSize: '1.2rem', fontWeight: 700 }}>{active.title}</h3>
               </div>
-              <div style={{ marginBottom: 32 }}>
-                <label style={{ display: 'block', fontWeight: 700, marginBottom: 12, color: C.ink, fontSize: '0.95rem' }}>How are you feeling? <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label>
-                <select className="select-field" value={emotional} onChange={e => setEmotional(e.target.value)}>
-                  <option value="">Choose an emotional state...</option>
-                  <option>Calm & grounded</option><option>Energized & hopeful</option>
-                  <option>Reflective & curious</option><option>Overwhelmed but trying</option>
-                  <option>Grateful</option><option>Still processing</option>
-                </select>
+              <p style={{ color: '#999', fontSize: '0.88rem', marginBottom: 28 }}>Fill out the form and we'll reach out.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
+                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
+                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
               </div>
-              <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: '1rem' }} onClick={handleShare} disabled={!msg.trim() || submitting}>{submitting ? 'Submitting...' : 'Submit Reflection'}</button>
+              <div style={{ marginBottom: 20 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School, network, or org name" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
+              <div style={{ marginBottom: 28 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Message <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label><textarea className="input-field" rows={3} placeholder="Tell us a bit about yourself..." value={form.message} onChange={e => set('message', e.target.value)} style={{ resize: 'vertical' }} /></div>
+              <button onClick={handleSubmit} disabled={!form.name || !form.email || submitting} style={{
+                width: '100%', padding: '16px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
+                background: active.gradient, color: 'white', cursor: 'pointer',
+                boxShadow: `0 4px 16px ${active.color}22`, transition: 'all 0.3s',
+                opacity: (!form.name || !form.email) ? 0.5 : 1,
+              }}>{submitting ? 'Submitting...' : 'Send'}</button>
             </div>
-          )
-        )}
-
-        {/* Join Tab */}
-        {tab === 'join' && (
-          joinSubmitted ? (
-            <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              <div style={{ fontSize: '4rem', marginBottom: 24 }}>{'\u{1F957}'}</div>
-              <h2 style={{ color: C.olive, marginBottom: 14, fontSize: '2rem' }}>You're in the bowl!</h2>
-              <p style={{ color: '#777', fontSize: '1.1rem' }}>We'll be in touch. Thank you.</p>
-              <button className="btn-secondary" style={{ marginTop: 32 }} onClick={() => setJoinSubmitted(false)}>Submit Another</button>
-            </div>
-          ) : (
-            <div className="glass-card" style={{ borderRadius: 24, padding: '44px 40px' }}>
-              <h3 style={{ color: C.olive, marginBottom: 24, fontSize: '1.15rem' }}>Tell us about yourself</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 22 }}>
-                <div><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>Full Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
-                <div><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@school.edu" value={form.email} onChange={e => set('email', e.target.value)} /></div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 28 }}>
-                <div><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>Role</label>
-                  <select className="select-field" value={form.role} onChange={e => set('role', e.target.value)}>
-                    <option value="">Select role...</option><option>Teacher</option><option>Admin</option><option>Partner</option><option>Investor</option><option>Advisor</option><option>Other</option>
-                  </select>
-                </div>
-                <div><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School or org" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
-              </div>
-              <div style={{ height: 1, background: C.sand, margin: '0 0 24px' }} />
-              <div style={{ marginBottom: 18 }}><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>What excites you about Salad Bowl?</label><textarea className="input-field" rows={3} value={form.excitement} onChange={e => set('excitement', e.target.value)} placeholder="What drew you here?" /></div>
-              <div style={{ marginBottom: 28 }}><label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 8 }}>Skills or Expertise</label><input className="input-field" placeholder="e.g. Yoga, SEL curriculum, data analysis..." value={form.skills} onChange={e => set('skills', e.target.value)} /></div>
-              <div style={{ marginBottom: 28 }}>
-                <label style={{ fontWeight: 700, fontSize: '0.88rem', display: 'block', marginBottom: 12 }}>Join pilot updates?</label>
-                <div style={{ display: 'flex', gap: 14 }}>
-                  {['yes', 'no'].map(v => (
-                    <button key={v} onClick={() => set('wantsUpdates', v)} style={{
-                      padding: '10px 28px', borderRadius: '99px',
-                      border: `2px solid ${form.wantsUpdates === v ? C.olive : C.sand}`,
-                      background: form.wantsUpdates === v ? C.olive : 'white',
-                      color: form.wantsUpdates === v ? 'white' : C.ink,
-                      fontWeight: 600, transition: 'all 0.25s',
-                    }}>{v === 'yes' ? 'Yes, keep me posted' : 'No thanks'}</button>
-                  ))}
-                </div>
-              </div>
-              <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '18px', fontSize: '1.05rem' }} onClick={handleJoin} disabled={!form.name || !form.email || submitting}>{submitting ? 'Submitting...' : 'Join the Bowl'}</button>
-            </div>
-          )
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1119,8 +1129,9 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
           </div>
           <div>
             <div style={{ color: 'white', fontWeight: 700, marginBottom: 16, fontSize: '0.78rem', letterSpacing: 1.5, textTransform: 'uppercase' }}>Community</div>
-            <FLink onClick={() => setPage('connect')}>Share Experience</FLink>
-            <FLink onClick={() => setPage('connect')}>Join the Team</FLink>
+            <FLink onClick={() => setPage('connect')}>Partner With Us</FLink>
+            <FLink onClick={() => setPage('connect')}>Join Our Team</FLink>
+            <FLink onClick={() => setPage('connect')}>Become a Backer</FLink>
           </div>
         </div>
       </div>
@@ -1151,7 +1162,7 @@ export default function App() {
           {page === 'module' && currentModule && <ModulePage mod={currentModule} setPage={navigateTo} />}
           {page === 'plans' && <PlansPage setPage={navigateTo} />}
           {page === 'ask' && <AskPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
-          {page === 'connect' && <ConnectPage />}
+          {page === 'connect' && <BuildWithUsPage />}
           {page === 'teacher' && (role === 'teacher' || role === 'admin') && <TeacherDashboard />}
           {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'teacher' && role === 'public' && (
