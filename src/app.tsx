@@ -28,7 +28,7 @@ const TEAM_SECTIONS: { label: string; color: string; people: TeamPerson[] }[] = 
   {
     label: 'Founding Team', color: C.olive, people: [
       { name: 'Akriti Asthana', title: 'Founder', emoji: '\u{1F33F}', image: '/akriti.png', subtitles: ['Former Fellow, American Red Cross', 'Former Alumni Specialist, Marketing, BCG'] },
-      { name: 'Urvi Sengar', title: 'Senior Software Engineer (AI/ML), Microsoft', emoji: '\u{1F4BB}', image: '/urvi.jpeg' },
+      { name: 'Urvi Sengar', title: 'Technical Lead', emoji: '\u{1F4BB}', image: '/urvi.jpeg', subtitles: ['Senior Software Engineer (AI/ML), Microsoft'] },
       { name: 'Lav Kanoi', title: 'Strategic Advisor', emoji: '\u{1F393}', image: '/lav.jpg', subtitles: ['PhD, Yale University', 'Former Management Consultant, BCG'] },
     ],
   },
