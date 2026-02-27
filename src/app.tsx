@@ -1222,12 +1222,19 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
 
 // App
 export default function App() {
-  const [page, setPage] = useState('home')
+  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin'].includes(h) ? h : 'home' }
+  const [page, setPage] = useState(getPageFromHash)
   const [role, setRole] = useState<Role>('public')
   const [currentModule, setCurrentModule] = useState<Module | null>(null)
   const teamRef = useRef<HTMLDivElement>(null)
 
-  const navigateTo = (p: string) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  useEffect(() => {
+    const onHash = () => { const p = getPageFromHash(); setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  const navigateTo = (p: string) => { setPage(p); window.location.hash = p === 'home' ? '' : p; window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
   return (
     <>
