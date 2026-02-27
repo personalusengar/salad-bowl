@@ -20,26 +20,32 @@ interface Module {
 interface Progress { id: string; moduleId: string; groupName: string; completed: boolean; timeWatchedEstimate: number; createdAt: Date }
 interface Feedback { id: string; message: string; emotionalState: string | null; createdAt: Date }
 interface TeamInterest { id: string; name: string; email: string; role: string; organization: string; contribution: string; excitement: string; skills: string; wantsUpdates: boolean; phone: string; createdAt: Date }
-interface TeamPerson { name: string; title: string; emoji: string }
+interface TeamPerson { name: string; title: string; emoji: string; image?: string; subtitles?: string[] }
 interface ChatMsg { role: 'user' | 'assistant'; text: string; modules?: Module[] }
 
 // Team Data
-const TEAM: Record<string, TeamPerson[]> = {
-  founders: [
-    { name: 'Amara Osei-Bonsu', title: 'Co-Founder & CEO', emoji: '\u{1F33F}' },
-    { name: 'Diego Reyes', title: 'Co-Founder & Head of Content', emoji: '\u{1F957}' },
-  ],
-  partners: [
-    { name: 'Roots & Branches Foundation', title: 'Impact Partner', emoji: '\u{1F331}' },
-    { name: 'EduWell Collective', title: 'Curriculum Partner', emoji: '\u{1F4DA}' },
-    { name: 'Schoolhouse Studios', title: 'Technology Partner', emoji: '\u{1F4BB}' },
-  ],
-  advisors: [
-    { name: 'Dr. Priya Nair', title: 'SEL Research Advisor', emoji: '\u{1F393}' },
-    { name: 'James Thornton', title: 'School Leadership Advisor', emoji: '\u{1F3EB}' },
-    { name: 'Yuki Tanaka', title: 'Mindfulness & Yoga Advisor', emoji: '\u{1F9D8}' },
-  ],
-}
+const TEAM_SECTIONS: { label: string; color: string; people: TeamPerson[] }[] = [
+  {
+    label: 'Founding Team', color: C.olive, people: [
+      { name: 'Akriti Asthana', title: 'Founder', emoji: '\u{1F33F}', image: '/akriti.png', subtitles: ['Former Fellow, American Red Cross', 'Former Alumni Specialist, Marketing, BCG'] },
+      { name: 'Urvi Sengar', title: 'Senior Software Engineer (AI/ML), Microsoft', emoji: '\u{1F4BB}', image: '/urvi.jpeg' },
+      { name: 'Lav Kanoi', title: 'Strategic Advisor', emoji: '\u{1F393}', image: '/lav.jpg', subtitles: ['PhD, Yale University', 'Former Management Consultant, BCG'] },
+    ],
+  },
+  {
+    label: 'Program & Pilot Partners', color: C.teal, people: [
+      { name: 'Siddheshwar Singh', title: 'Certified Yoga Instructor', emoji: '\u{1F9D8}', image: '/siddheshwar.png', subtitles: ['Content Creator'] },
+      { name: 'Media For Change', title: 'Pilot Partner - Ocean College', emoji: '\u{1F3AC}', image: '/media-for-change.png' },
+      { name: 'Montgomery County Public Schools', title: 'Pilot Partner - Harmony Hills Elementary School', emoji: '\u{1F3EB}' },
+      { name: 'Village of Friendship Heights', title: 'Pilot Partner - Friendship Heights Community Center', emoji: '\u{1F3D8}' },
+    ],
+  },
+  {
+    label: 'Institutional Support', color: C.saffron, people: [
+      { name: 'Arizona State University', title: 'Institutional Partner', emoji: '\u{1F393}', image: '/asu.png', subtitles: ['The Difference Engine'] },
+    ],
+  },
+]
 
 // Seed Data
 const SEED_MODULES: Module[] = [
@@ -151,9 +157,7 @@ const globalStyles = `
     .footer-inner{flex-direction:column;text-align:center;gap:28px!important}
     .footer-links{justify-content:center}
     .why-grid{grid-template-columns:1fr!important}
-    .team-row{flex-direction:column;align-items:flex-start!important;gap:12px!important}
-    .team-row-label{width:auto!important}
-    .team-people{gap:14px!important}
+    .team-cards-grid{flex-direction:column}
     .build-form-wrap{padding:28px 20px!important}
     .build-card{padding:28px 20px 24px!important}
     .ask-header{padding:16px!important}
@@ -234,31 +238,65 @@ const Nav = ({ page, setPage, role, setRole, teamRef }: {
 // Team Section
 const TeamSection = ({ teamRef }: { teamRef: React.RefObject<HTMLDivElement> }) => {
   const reveal = useReveal()
-  const Row = ({ label, people, color }: { label: string; people: TeamPerson[]; color: string }) => (
-    <div className="team-row" style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: `1px solid ${C.olive}0c` }}>
-      <span className="team-row-label" style={{ width: 85, fontSize: '0.68rem', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color, flexShrink: 0 }}>{label}</span>
-      <div className="team-people" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        {people.map(p => (
-          <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${C.sand},${C.cream})`, border: `1.5px solid ${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.05rem', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              {p.emoji}
-            </div>
-            <div>
-              <p style={{ fontSize: '0.85rem', fontWeight: 700, color: C.ink, lineHeight: 1.2 }}>{p.name}</p>
-              <p style={{ fontSize: '0.72rem', color: '#999', letterSpacing: '0.2px' }}>{p.title}</p>
-            </div>
-          </div>
+
+  const Avatar = ({ person, color, size = 56 }: { person: TeamPerson; color: string; size?: number }) => (
+    person.image ? (
+      <img src={person.image} alt={person.name} style={{
+        width: size, height: size, borderRadius: '50%', objectFit: 'cover',
+        border: `2px solid ${color}30`, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', flexShrink: 0,
+      }} />
+    ) : (
+      <div style={{
+        width: size, height: size, borderRadius: '50%',
+        background: `linear-gradient(135deg,${color}20,${color}10)`,
+        border: `2px solid ${color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: size * 0.35, fontWeight: 800, color, flexShrink: 0,
+        boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+      }}>
+        {person.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+      </div>
+    )
+  )
+
+  const PersonCard = ({ person, color }: { person: TeamPerson; color: string }) => (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px',
+      background: C.white, borderRadius: 16, border: `1px solid ${C.sand}`,
+      boxShadow: '0 1px 6px rgba(0,0,0,0.03)', transition: 'box-shadow 0.25s',
+      flex: '1 1 280px', maxWidth: 400,
+    }}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)'}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 6px rgba(0,0,0,0.03)'}>
+      <Avatar person={person} color={color} />
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontSize: '0.92rem', fontWeight: 700, color: C.ink, lineHeight: 1.3, marginBottom: 3 }}>{person.name}</p>
+        <p style={{ fontSize: '0.78rem', color: '#888', lineHeight: 1.5 }}>{person.title}</p>
+        {person.subtitles?.map((s, i) => (
+          <p key={i} style={{ fontSize: '0.74rem', color: '#aaa', lineHeight: 1.4 }}>{s}</p>
         ))}
       </div>
     </div>
   )
+
   return (
-    <div ref={teamRef} style={{ background: `linear-gradient(180deg,${C.bg},${C.cream})`, borderTop: `1px solid ${C.sand}`, padding: '56px 24px' }}>
-      <div ref={reveal.ref} style={{ maxWidth: 900, margin: '0 auto', ...reveal.style }}>
-        <p style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: C.terra, marginBottom: 20 }}>Our Team</p>
-        <Row label="Founders" people={TEAM.founders} color={C.olive} />
-        <Row label="Partners" people={TEAM.partners} color={C.teal} />
-        <Row label="Advisors" people={TEAM.advisors} color={C.terra} />
+    <div ref={teamRef} style={{ background: `linear-gradient(180deg,${C.bg},${C.cream})`, borderTop: `1px solid ${C.sand}`, padding: '72px 24px 64px' }}>
+      <div ref={reveal.ref} style={{ maxWidth: 960, margin: '0 auto', ...reveal.style }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{ display: 'inline-block', padding: '6px 20px', borderRadius: 99, background: `${C.terra}12`, color: C.terra, fontWeight: 700, fontSize: '0.75rem', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 14 }}>Our Team</div>
+          <h2 style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: C.ink, lineHeight: 1.2 }}>The people behind Salad Bowl</h2>
+        </div>
+
+        {TEAM_SECTIONS.map((section, si) => (
+          <div key={si} style={{ marginBottom: si < TEAM_SECTIONS.length - 1 ? 44 : 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+              <div style={{ width: 4, height: 24, borderRadius: 4, background: section.color }} />
+              <h3 style={{ fontSize: '0.82rem', fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: section.color }}>{section.label}</h3>
+            </div>
+            <div className="team-cards-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+              {section.people.map(p => <PersonCard key={p.name} person={p} color={section.color} />)}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
