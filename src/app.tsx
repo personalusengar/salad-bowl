@@ -817,7 +817,7 @@ const BuildWithUsPage = () => {
     if (!form.name || !form.email || !activeCard || submitting) return
     setSubmitting(true)
     _teamInterest.push({ id: Date.now().toString(), name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: form.position, excitement: form.comments, skills: '', wantsUpdates: form.canContact, phone: form.phone, createdAt: new Date() })
-    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: form.position, excitement: form.comments, skills: '', wantsUpdates: form.canContact, phone: form.phone }) }) } catch {}
+    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: form.name, email: form.email, interestType: activeCard, phone: form.phone, position: form.position, organization: form.organization, comments: form.comments, contactPermission: form.canContact }) }) } catch {}
     setSubmitting(false)
     setSubmitted(true)
   }

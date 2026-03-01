@@ -19,18 +19,18 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
+    await sql`DROP TABLE IF EXISTS team_interest`;
     await sql`
       CREATE TABLE IF NOT EXISTS team_interest (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL,
-        role TEXT DEFAULT '',
-        organization TEXT DEFAULT '',
-        contribution TEXT DEFAULT '',
-        excitement TEXT DEFAULT '',
-        skills TEXT DEFAULT '',
-        wants_updates BOOLEAN DEFAULT false,
+        interest_type TEXT DEFAULT '',
         phone TEXT DEFAULT '',
+        position TEXT DEFAULT '',
+        organization TEXT DEFAULT '',
+        comments TEXT DEFAULT '',
+        contact_permission BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;

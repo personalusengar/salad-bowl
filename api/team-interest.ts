@@ -14,11 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!dbUrl) return res.status(500).json({ error: 'No database connection string found' });
     const sql = neon(dbUrl);
     if (req.method === 'POST') {
-      const { name, email, role, organization, contribution, excitement, skills, wantsUpdates, phone } = req.body;
+      const { name, email, interestType, phone, position, organization, comments, contactPermission } = req.body;
       if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
       await sql`
-        INSERT INTO team_interest (name, email, role, organization, contribution, excitement, skills, wants_updates, phone)
-        VALUES (${name}, ${email}, ${role || ''}, ${organization || ''}, ${contribution || ''}, ${excitement || ''}, ${skills || ''}, ${wantsUpdates || false}, ${phone || ''})
+        INSERT INTO team_interest (name, email, interest_type, phone, position, organization, comments, contact_permission)
+        VALUES (${name}, ${email}, ${interestType || ''}, ${phone || ''}, ${position || ''}, ${organization || ''}, ${comments || ''}, ${contactPermission || false})
       `;
       return res.status(201).json({ ok: true });
     }
