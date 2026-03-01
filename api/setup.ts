@@ -1,9 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 
+const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING || '';
+
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL!);
+    const dbUrl = getDbUrl();
+    if (!dbUrl) {
+      const envKeys = Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('POSTGRES') || k.includes('NEON') || k.includes('PG'));
+      return res.status(500).json({ error: 'No database URL found', checked: ['DATABASE_URL', 'POSTGRES_URL', 'NEON_DATABASE_URL', 'POSTGRES_URL_NON_POOLING'], found_related_vars: envKeys });
+    }
+    const sql = neon(dbUrl);
     await sql`
       CREATE TABLE IF NOT EXISTS feedback (
         id SERIAL PRIMARY KEY,

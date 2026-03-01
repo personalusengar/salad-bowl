@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 
+const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING || '';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -8,7 +10,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL!);
+    const dbUrl = getDbUrl();
+    if (!dbUrl) return res.status(500).json({ error: 'No database connection string found' });
+    const sql = neon(dbUrl);
     if (req.method === 'POST') {
       const { message, emotionalState } = req.body;
       if (!message) return res.status(400).json({ error: 'Message is required' });
