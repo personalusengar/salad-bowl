@@ -807,17 +807,17 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
 // Build With Us Page — 3-column cards, click to expand form
 const BuildWithUsPage = () => {
   const [activeCard, setActiveCard] = useState<string | null>(null)
-  const [form, setForm] = useState({ name: '', email: '', organization: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', organization: '', position: '', comments: '', canContact: false })
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLDivElement>(null)
-  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
+  const set = (k: string, v: string | boolean) => setForm(p => ({ ...p, [k]: v }))
 
   const handleSubmit = async () => {
     if (!form.name || !form.email || !activeCard || submitting) return
     setSubmitting(true)
-    _teamInterest.push({ id: Date.now().toString(), name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: '', excitement: form.message, skills: '', wantsUpdates: true, phone: '', createdAt: new Date() })
-    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: '', excitement: form.message, skills: '', wantsUpdates: true, phone: '' }) }) } catch {}
+    _teamInterest.push({ id: Date.now().toString(), name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: form.position, excitement: form.comments, skills: '', wantsUpdates: form.canContact, phone: form.phone, createdAt: new Date() })
+    try { await fetch('/api/team-interest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: form.name, email: form.email, role: activeCard, organization: form.organization, contribution: form.position, excitement: form.comments, skills: '', wantsUpdates: form.canContact, phone: form.phone }) }) } catch {}
     setSubmitting(false)
     setSubmitted(true)
   }
@@ -826,7 +826,7 @@ const BuildWithUsPage = () => {
     const isOpen = activeCard === id
     setActiveCard(isOpen ? null : id)
     setSubmitted(false)
-    setForm({ name: '', email: '', organization: '', message: '' })
+    setForm({ name: '', email: '', phone: '', organization: '', position: '', comments: '', canContact: false })
     if (!isOpen) setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
   }
 
@@ -906,7 +906,7 @@ const BuildWithUsPage = () => {
 
         {/* Expandable Form */}
         <div ref={formRef} style={{
-          maxHeight: activeCard ? 600 : 0, opacity: activeCard ? 1 : 0,
+          maxHeight: activeCard ? 750 : 0, opacity: activeCard ? 1 : 0,
           overflow: 'hidden', transition: 'max-height 0.5s cubic-bezier(.22,1,.36,1), opacity 0.4s ease',
           marginTop: activeCard ? 36 : 0,
         }}>
@@ -932,13 +932,21 @@ const BuildWithUsPage = () => {
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
               </div>
+              <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
+                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Phone *</label><input className="input-field" type="tel" placeholder="Your phone number" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
+                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Position</label><input className="input-field" placeholder="Your role / title" value={form.position} onChange={e => set('position', e.target.value)} /></div>
+              </div>
               <div style={{ marginBottom: 20 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School, network, or org name" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
-              <div style={{ marginBottom: 28 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Message <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label><textarea className="input-field" rows={3} placeholder="Tell us a bit about yourself..." value={form.message} onChange={e => set('message', e.target.value)} style={{ resize: 'vertical' }} /></div>
-              <button onClick={handleSubmit} disabled={!form.name || !form.email || submitting} style={{
+              <div style={{ marginBottom: 24 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Comments <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label><textarea className="input-field" rows={3} placeholder="Anything else you'd like us to know..." value={form.comments} onChange={e => set('comments', e.target.value)} style={{ resize: 'vertical' }} /></div>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 28, cursor: 'pointer', fontSize: '0.9rem', color: '#555', lineHeight: 1.5 }}>
+                <input type="checkbox" checked={form.canContact} onChange={e => set('canContact', e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: active.color, cursor: 'pointer' }} />
+                <span>I give permission to Salad Bowl to contact me regarding this inquiry.</span>
+              </label>
+              <button onClick={handleSubmit} disabled={!form.name || !form.email || !form.phone || !form.canContact || submitting} style={{
                 width: '100%', padding: '16px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
                 background: active.gradient, color: 'white', cursor: 'pointer',
                 boxShadow: `0 4px 16px ${active.color}22`, transition: 'all 0.3s',
-                opacity: (!form.name || !form.email) ? 0.5 : 1,
+                opacity: (!form.name || !form.email || !form.phone || !form.canContact) ? 0.5 : 1,
               }}>{submitting ? 'Submitting...' : 'Send'}</button>
             </div>
           )}
