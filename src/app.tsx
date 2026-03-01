@@ -933,7 +933,7 @@ const BuildWithUsPage = () => {
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
               </div>
               <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
-                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Phone *</label><input className="input-field" type="tel" placeholder="Your phone number" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
+                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Phone</label><input className="input-field" type="tel" placeholder="Your phone number" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
                 <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Position</label><input className="input-field" placeholder="Your role / title" value={form.position} onChange={e => set('position', e.target.value)} /></div>
               </div>
               <div style={{ marginBottom: 20 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School, network, or org name" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
@@ -942,11 +942,11 @@ const BuildWithUsPage = () => {
                 <input type="checkbox" checked={form.canContact} onChange={e => set('canContact', e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: active.color, cursor: 'pointer' }} />
                 <span>I give permission to Salad Bowl to contact me regarding this inquiry.</span>
               </label>
-              <button onClick={handleSubmit} disabled={!form.name || !form.email || !form.phone || !form.canContact || submitting} style={{
+              <button onClick={handleSubmit} disabled={!form.name || !form.email || !form.canContact || submitting} style={{
                 width: '100%', padding: '16px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
                 background: active.gradient, color: 'white', cursor: 'pointer',
                 boxShadow: `0 4px 16px ${active.color}22`, transition: 'all 0.3s',
-                opacity: (!form.name || !form.email || !form.phone || !form.canContact) ? 0.5 : 1,
+                opacity: (!form.name || !form.email || !form.canContact) ? 0.5 : 1,
               }}>{submitting ? 'Submitting...' : 'Send'}</button>
             </div>
           )}
