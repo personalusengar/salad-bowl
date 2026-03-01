@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,6 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+    const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL!);
     if (req.method === 'POST') {
       const { message, emotionalState } = req.body;
       if (!message) return res.status(400).json({ error: 'Message is required' });
@@ -15,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json({ ok: true });
     }
 
-    const { rows } = await sql`SELECT * FROM feedback ORDER BY created_at DESC`;
+    const rows = await sql`SELECT * FROM feedback ORDER BY created_at DESC`;
     return res.status(200).json(rows);
   } catch (err) {
     return res.status(500).json({ error: String(err) });
