@@ -25,7 +25,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT NOT NULL,
-        interest_type TEXT DEFAULT '',
+        interest_types TEXT DEFAULT '',
         phone TEXT DEFAULT '',
         position TEXT DEFAULT '',
         organization TEXT DEFAULT '',
