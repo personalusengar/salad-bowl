@@ -804,13 +804,12 @@ const AskPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; 
   )
 }
 
-// Build With Us Page — 3 interest categories with multi-select + single form
+// Build With Us Page — single form with inline interest selection
 const BuildWithUsPage = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [form, setForm] = useState({ name: '', email: '', phone: '', organization: '', position: '', comments: '', canContact: false })
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const formRef = useRef<HTMLDivElement>(null)
   const set = (k: string, v: string | boolean) => setForm(p => ({ ...p, [k]: v }))
 
   const toggleInterest = (id: string) => {
@@ -827,18 +826,11 @@ const BuildWithUsPage = () => {
     setSubmitted(true)
   }
 
-  const cards = [
-    { id: 'partner', emoji: '\u{1F3EB}', title: 'Partner With Us', subtitle: 'Schools & Programs', description: 'For schools, afterschool programs, charter networks, and organized learning communities interested in launching a pilot.', color: C.olive, gradient: `linear-gradient(135deg,${C.olive},${C.oliveL})` },
-    { id: 'join', emoji: '\u{1F331}', title: 'Join Our Team', subtitle: 'Educators & Builders', description: 'For educators, cultural practitioners, designers, and operators who want to help shape the future of embodied SEL.', color: C.teal, gradient: `linear-gradient(135deg,${C.teal},${C.tealL})` },
-    { id: 'backer', emoji: '\u{1F4B0}', title: 'Become an Early Backer', subtitle: 'Angels & Supporters', description: 'We are raising $100,000 at pre-seed to move from pilot validation to recurring institutional revenue. We welcome aligned angels and small early checks.', color: C.saffron, gradient: `linear-gradient(135deg,${C.saffron},${C.saffronL})` },
+  const interests = [
+    { id: 'partner', emoji: '\u{1F3EB}', title: 'Partner With Us', subtitle: 'Schools & Programs', desc: 'For schools, afterschool programs, charter networks, and organized learning communities interested in launching a pilot.', color: C.olive },
+    { id: 'join', emoji: '\u{1F331}', title: 'Join Our Team', subtitle: 'Educators & Builders', desc: 'For educators, cultural practitioners, designers, and operators who want to help shape the future of embodied SEL.', color: C.teal },
+    { id: 'backer', emoji: '\u{1F4B0}', title: 'Become an Early Backer', subtitle: 'Angels & Supporters', desc: 'We are raising $100,000 at pre-seed to move from pilot validation to recurring institutional revenue. We welcome aligned angels and small early checks.', color: C.saffron },
   ]
-
-  const primaryColor = selectedInterests.length > 0
-    ? (cards.find(c => c.id === selectedInterests[0])?.color || C.olive)
-    : C.olive
-  const primaryGradient = selectedInterests.length > 0
-    ? (cards.find(c => c.id === selectedInterests[0])?.gradient || `linear-gradient(135deg,${C.olive},${C.oliveL})`)
-    : `linear-gradient(135deg,${C.olive},${C.oliveL})`
 
   return (
     <div className="fade-up">
@@ -846,120 +838,97 @@ const BuildWithUsPage = () => {
         <h1>Build With Us</h1>
         <p style={{ maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>Salad Bowl is growing through educators, institutional partners, and early believers who see the need for culturally grounded, embodied SEL. If you feel aligned, we'd love to connect.</p>
       </div>
-      <div className="container section" style={{ maxWidth: 1020 }}>
-        {/* Interest selection label */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h2 style={{ fontSize: 'clamp(1.3rem,3vw,1.8rem)', color: C.ink, marginBottom: 8 }}>What interests you?</h2>
-          <p style={{ color: '#888', fontSize: '0.95rem' }}>Select all that apply — then fill out the form below.</p>
-        </div>
+      <div className="container section" style={{ maxWidth: 680, margin: '0 auto' }}>
+        {submitted ? (
+          <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: 20 }}>{'\u{1F957}'}</div>
+            <h2 style={{ color: C.olive, marginBottom: 12, fontSize: '1.8rem' }}>Thank you!</h2>
+            <p style={{ color: '#777', fontSize: '1.05rem', lineHeight: 1.6 }}>We'll be in touch soon. Thank you for believing in embodied SEL.</p>
+            <button className="btn-secondary" style={{ marginTop: 28 }} onClick={() => { setSelectedInterests([]); setSubmitted(false); setForm({ name: '', email: '', phone: '', organization: '', position: '', comments: '', canContact: false }) }}>Submit Another</button>
+          </div>
+        ) : (
+          <div className="build-form-wrap" style={{
+            background: C.white, borderRadius: 24, padding: '44px 44px 40px',
+            border: `1px solid ${C.sand}`, boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+          }}>
+            {/* Form title */}
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: '1.5rem', color: C.ink, marginBottom: 6 }}>Get in touch</h2>
+            <p style={{ color: '#999', fontSize: '0.9rem', marginBottom: 32, lineHeight: 1.6 }}>Tell us a bit about yourself and how you'd like to be involved.</p>
 
-        {/* Three Category Cards — click to select */}
-        <div className="build-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 40 }}>
-          {cards.map(card => {
-            const isSelected = selectedInterests.includes(card.id)
-            return (
-              <div key={card.id} className="build-card" onClick={() => toggleInterest(card.id)} style={{
-                background: isSelected ? card.color : C.white,
-                borderRadius: 20, padding: '28px 24px 24px', textAlign: 'center',
-                border: `2px solid ${isSelected ? card.color : C.sand}`,
-                boxShadow: isSelected ? `0 6px 24px ${card.color}30` : '0 2px 12px rgba(0,0,0,0.04)',
-                transition: 'all 0.3s cubic-bezier(.22,1,.36,1)',
-                cursor: 'pointer', position: 'relative',
-                transform: isSelected ? 'translateY(-3px)' : 'translateY(0)',
-              }}
-                onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = card.color + '66'; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${card.color}18` } }}
-                onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = C.sand; (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.04)' } }}>
-                {/* Checkbox */}
-                <div style={{
-                  position: 'absolute', top: 14, right: 14, width: 26, height: 26, borderRadius: 7,
-                  border: `2px solid ${isSelected ? 'rgba(255,255,255,0.7)' : card.color + '35'}`,
-                  background: isSelected ? 'rgba(255,255,255,0.25)' : `${card.color}08`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.3s',
-                }}>
-                  {isSelected && <span style={{ color: 'white', fontSize: '0.95rem', fontWeight: 900, lineHeight: 1 }}>{'✓'}</span>}
-                </div>
-                {/* Emoji + Title */}
-                <div style={{ fontSize: '2rem', marginBottom: 12 }}>{card.emoji}</div>
-                <h3 style={{
-                  fontFamily: "'Playfair Display',serif", fontSize: '1.2rem', fontWeight: 700,
-                  color: isSelected ? 'white' : card.color, marginBottom: 8, transition: 'color 0.3s',
-                }}>{card.title}</h3>
-                <p style={{
-                  color: isSelected ? 'rgba(255,255,255,0.85)' : '#777',
-                  fontSize: '0.88rem', lineHeight: 1.65, transition: 'color 0.3s',
-                }}>{card.description}</p>
+            {/* Name + Email */}
+            <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
+              <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
+              <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
+            </div>
+
+            {/* Phone + Position */}
+            <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
+              <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Phone</label><input className="input-field" type="tel" placeholder="Your phone number" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
+              <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Position</label><input className="input-field" placeholder="Your role / title" value={form.position} onChange={e => set('position', e.target.value)} /></div>
+            </div>
+
+            {/* Organization */}
+            <div style={{ marginBottom: 24 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School, network, or org name" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
+
+            {/* Interest selection — inline in the form */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 12 }}>I'm interested in... * <span style={{ color: '#bbb', fontWeight: 400 }}>(select all that apply)</span></label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {interests.map(item => {
+                  const isSelected = selectedInterests.includes(item.id)
+                  return (
+                    <div key={item.id} onClick={() => toggleInterest(item.id)} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 18px',
+                      borderRadius: 14, cursor: 'pointer',
+                      border: `2px solid ${isSelected ? item.color : C.sand}`,
+                      background: isSelected ? `${item.color}08` : C.white,
+                      transition: 'all 0.25s',
+                    }}
+                      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = item.color + '55' }}
+                      onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.borderColor = C.sand }}>
+                      {/* Checkbox */}
+                      <div style={{
+                        width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                        border: `2px solid ${isSelected ? item.color : '#ccc'}`,
+                        background: isSelected ? item.color : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 0.25s',
+                      }}>
+                        {isSelected && <span style={{ color: 'white', fontSize: '0.75rem', fontWeight: 900, lineHeight: 1 }}>{'✓'}</span>}
+                      </div>
+                      {/* Label */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1rem' }}>{item.emoji}</span>
+                          <span style={{ fontWeight: 700, fontSize: '0.93rem', color: isSelected ? item.color : C.ink }}>{item.title}</span>
+                          <span style={{ padding: '2px 10px', borderRadius: 99, fontSize: '0.68rem', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', background: `${item.color}12`, color: item.color }}>{item.subtitle}</span>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: '#777', marginTop: 6, lineHeight: 1.6 }}>{item.desc}</p>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })}
-        </div>
+            </div>
 
-        {/* Selected interests summary */}
-        {selectedInterests.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
-            {selectedInterests.map(id => {
-              const card = cards.find(c => c.id === id)!
-              return (
-                <span key={id} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '6px 16px', borderRadius: 99, fontSize: '0.82rem', fontWeight: 700,
-                  background: `${card.color}14`, color: card.color,
-                }}>
-                  {card.title}
-                  <button onClick={(e) => { e.stopPropagation(); toggleInterest(id) }} style={{
-                    background: 'none', border: 'none', color: card.color, cursor: 'pointer',
-                    fontSize: '0.9rem', fontWeight: 800, padding: '0 2px', lineHeight: 1,
-                  }}>{'✕'}</button>
-                </span>
-              )
-            })}
+            {/* Comments */}
+            <div style={{ marginBottom: 24 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Comments <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label><textarea className="input-field" rows={3} placeholder="Anything else you'd like us to know..." value={form.comments} onChange={e => set('comments', e.target.value)} style={{ resize: 'vertical' }} /></div>
+
+            {/* Contact permission */}
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 28, cursor: 'pointer', fontSize: '0.9rem', color: '#555', lineHeight: 1.5 }}>
+              <input type="checkbox" checked={form.canContact} onChange={e => set('canContact', e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: C.olive, cursor: 'pointer' }} />
+              <span>I give permission to Salad Bowl to contact me regarding this inquiry.</span>
+            </label>
+
+            {/* Submit */}
+            <button onClick={handleSubmit} disabled={!form.name || !form.email || !form.canContact || selectedInterests.length === 0 || submitting} style={{
+              width: '100%', padding: '16px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
+              background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', cursor: 'pointer',
+              boxShadow: `0 4px 16px ${C.olive}22`, transition: 'all 0.3s',
+              opacity: (!form.name || !form.email || !form.canContact || selectedInterests.length === 0) ? 0.5 : 1,
+            }}>{submitting ? 'Submitting...' : 'Send'}</button>
           </div>
         )}
-
-        {/* Form — always visible */}
-        <div ref={formRef}>
-          {submitted ? (
-            <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
-              <div style={{ fontSize: '3.5rem', marginBottom: 20 }}>{'\u{1F957}'}</div>
-              <h2 style={{ color: primaryColor, marginBottom: 12, fontSize: '1.8rem' }}>Thank you!</h2>
-              <p style={{ color: '#777', fontSize: '1.05rem', lineHeight: 1.6 }}>We'll be in touch soon. Thank you for believing in embodied SEL.</p>
-              <button className="btn-secondary" style={{ marginTop: 28 }} onClick={() => { setSelectedInterests([]); setSubmitted(false); setForm({ name: '', email: '', phone: '', organization: '', position: '', comments: '', canContact: false }) }}>Submit Another</button>
-            </div>
-          ) : (
-            <div className="build-form-wrap" style={{
-              background: C.white, borderRadius: 24, padding: '40px 44px',
-              border: `2px solid ${primaryColor}20`, boxShadow: `0 4px 24px ${primaryColor}0c`,
-              maxWidth: 620, margin: '0 auto',
-              transition: 'border-color 0.35s, box-shadow 0.35s',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 99, background: primaryGradient }} />
-                <h3 style={{ fontFamily: "'Playfair Display',serif", color: primaryColor, fontSize: '1.2rem', fontWeight: 700 }}>Tell us about yourself</h3>
-              </div>
-              <p style={{ color: '#999', fontSize: '0.88rem', marginBottom: 28 }}>{selectedInterests.length === 0 ? 'Select at least one interest above, then fill out the form.' : 'Fill out the form and we\'ll reach out.'}</p>
-              <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
-                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label><input className="input-field" placeholder="Your name" value={form.name} onChange={e => set('name', e.target.value)} /></div>
-                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label><input className="input-field" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} /></div>
-              </div>
-              <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 20 }}>
-                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Phone</label><input className="input-field" type="tel" placeholder="Your phone number" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
-                <div><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Position</label><input className="input-field" placeholder="Your role / title" value={form.position} onChange={e => set('position', e.target.value)} /></div>
-              </div>
-              <div style={{ marginBottom: 20 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Organization</label><input className="input-field" placeholder="School, network, or org name" value={form.organization} onChange={e => set('organization', e.target.value)} /></div>
-              <div style={{ marginBottom: 24 }}><label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Comments <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label><textarea className="input-field" rows={3} placeholder="Anything else you'd like us to know..." value={form.comments} onChange={e => set('comments', e.target.value)} style={{ resize: 'vertical' }} /></div>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 28, cursor: 'pointer', fontSize: '0.9rem', color: '#555', lineHeight: 1.5 }}>
-                <input type="checkbox" checked={form.canContact} onChange={e => set('canContact', e.target.checked)} style={{ marginTop: 3, width: 18, height: 18, accentColor: primaryColor, cursor: 'pointer' }} />
-                <span>I give permission to Salad Bowl to contact me regarding this inquiry.</span>
-              </label>
-              <button onClick={handleSubmit} disabled={!form.name || !form.email || !form.canContact || selectedInterests.length === 0 || submitting} style={{
-                width: '100%', padding: '16px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
-                background: primaryGradient, color: 'white', cursor: 'pointer',
-                boxShadow: `0 4px 16px ${primaryColor}22`, transition: 'all 0.3s',
-                opacity: (!form.name || !form.email || !form.canContact || selectedInterests.length === 0) ? 0.5 : 1,
-              }}>{submitting ? 'Submitting...' : `Send${selectedInterests.length > 0 ? ` (${selectedInterests.length} interest${selectedInterests.length > 1 ? 's' : ''})` : ''}`}</button>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   )
