@@ -13,6 +13,7 @@ const C = {
 // Types
 interface Module {
   id: string; title: string; description: string; videoUrl: string
+  mediaKind?: 'embed' | 'file'; accessLevel?: 'public' | 'admin'
   durationMinutes: number; ageLevel: string; contentType: string
   caselTags: string[]; energyLevel: string; learningGoals: string[]
   reflectionPrompt: string; isPublished: boolean; isPremium: boolean
@@ -55,19 +56,33 @@ const SEED_MODULES: Module[] = [
   { id:'m4', title:'Winter Yoga: Mindful Movement', description:'The final session of the Winter Wellbeing Pilot - a mindful movement flow to integrate learning and close with intention.', videoUrl:'https://www.youtube.com/embed/9kOo_0SHqNw', durationMinutes:30, ageLevel:'elementary', contentType:'skill_journey', caselTags:['Self-Management','Self-Awareness'], energyLevel:'calm', learningGoals:['Connect movement with breath','Practice mindful transitions','Integrate self-awareness tools'], reflectionPrompt:'What is one thing you will carry from this practice into your week?', isPublished:true, isPremium:false },
   { id:'m5', title:'5-Minute Focus Reset', description:'A quick skill to restore focus and calm between classes. Uses breath and grounding to transition your nervous system.', videoUrl:'https://www.youtube.com/embed/inpok4MKVLM', durationMinutes:5, ageLevel:'middle', contentType:'quick_skill', caselTags:['Self-Management'], energyLevel:'focused', learningGoals:['Reset focus quickly','Practice brief breath exercises','Use body awareness for transitions'], reflectionPrompt:'How focused do you feel now compared to before?', isPublished:true, isPremium:false },
   { id:'m6', title:'Shaking It Out: Energy Release', description:'A quick, energizing movement break to shake off excess energy and return to productive focus.', videoUrl:'https://www.youtube.com/embed/a31QLHPW8Q0', durationMinutes:8, ageLevel:'elementary', contentType:'quick_skill', caselTags:['Self-Management','Social Awareness'], energyLevel:'active', learningGoals:['Release excess energy mindfully','Practice body regulation','Build community through movement'], reflectionPrompt:'How does your body feel after shaking it out?', isPublished:true, isPremium:false },
-  { id:'m7', title:'The Talking Circle: Indigenous Listening', description:'Explore the tradition of talking circles as a cultural practice of deep listening and respectful dialogue.', videoUrl:'https://www.youtube.com/embed/placeholder', durationMinutes:20, ageLevel:'high', contentType:'cultural_moment', caselTags:['Social Awareness','Relationship Skills'], energyLevel:'calm', learningGoals:['Learn about talking circle traditions','Practice deep listening','Honor Indigenous communication practices'], reflectionPrompt:'What would change in your school if you used talking circles regularly?', isPublished:true, isPremium:true },
-  { id:'m8', title:'Ubuntu: I Am Because We Are', description:'A cultural exploration of the Ubuntu philosophy from Southern Africa and its applications in building community in schools.', videoUrl:'https://www.youtube.com/embed/placeholder', durationMinutes:15, ageLevel:'middle', contentType:'cultural_moment', caselTags:['Social Awareness','Relationship Skills','Responsible Decision-Making'], energyLevel:'focused', learningGoals:['Understand Ubuntu philosophy','Apply communal thinking to daily life','Reflect on interdependence'], reflectionPrompt:'How does Ubuntu change the way you think about your actions?', isPublished:true, isPremium:true },
+  { id:'m7', title:'The Talking Circle: Indigenous Listening', description:'Explore the tradition of talking circles as a cultural practice of deep listening and respectful dialogue.', videoUrl:'https://www.youtube.com/embed/DIK7pCoMUwE', durationMinutes:20, ageLevel:'high', contentType:'cultural_moment', caselTags:['Social Awareness','Relationship Skills'], energyLevel:'calm', learningGoals:['Learn about talking circle traditions','Practice deep listening','Honor Indigenous communication practices'], reflectionPrompt:'What would change in your school if you used talking circles regularly?', isPublished:true, isPremium:true },
+  { id:'m8', title:'Ubuntu: I Am Because We Are', description:'A cultural exploration of the Ubuntu philosophy from Southern Africa and its applications in building community in schools.', videoUrl:'https://www.youtube.com/embed/x3JZQLWk1Mg', durationMinutes:15, ageLevel:'middle', contentType:'cultural_moment', caselTags:['Social Awareness','Relationship Skills','Responsible Decision-Making'], energyLevel:'focused', learningGoals:['Understand Ubuntu philosophy','Apply communal thinking to daily life','Reflect on interdependence'], reflectionPrompt:'How does Ubuntu change the way you think about your actions?', isPublished:true, isPremium:true },
 ]
 
 const SEED_JOURNEYS = [
   { id:'j1', title:'Winter Wellbeing Pilot', description:'A 4-session yoga journey to cultivate calm, self-awareness, and grounded presence through the winter months.', orderedModuleIds:['m1','m2','m3','m4'] },
 ]
 
+const ADMIN_LIBRARY_MODULES: Module[] = [
+  {
+    id:'m9', title:'Reset Breath', description:'A private admin clip for quick nervous system resets using slow, grounded breathing.', videoUrl:'/Clip%20-%20Reset%20Breath.mp4', mediaKind:'file', accessLevel:'admin',
+    durationMinutes:2, ageLevel:'middle', contentType:'quick_skill', caselTags:['Self-Management','Self-Awareness'], energyLevel:'calm', learningGoals:['Reset breathing patterns','Support fast regulation','Create a calmer transition'], reflectionPrompt:'When would this clip be most useful during the school day?', isPublished:false, isPremium:false,
+  },
+  {
+    id:'m10', title:'Full Body Scan', description:'A private admin clip guiding a short full-body scan to help students notice tension and settle into the present moment.', videoUrl:'/Clip%202-%20Full%20Body%20Scan.mp4', mediaKind:'file', accessLevel:'admin',
+    durationMinutes:4, ageLevel:'middle', contentType:'quick_skill', caselTags:['Self-Management','Self-Awareness'], energyLevel:'calm', learningGoals:['Notice body sensations','Release stored tension','Build present-moment awareness'], reflectionPrompt:'What changes do you notice in your body after the scan?', isPublished:false, isPremium:false,
+  },
+]
+
+const isAdminOnlyModule = (mod: Module) => mod.accessLevel === 'admin'
+const isFileModule = (mod: Module) => mod.mediaKind === 'file' || /\.(mp4|webm|ogg)(\?|$)/i.test(mod.videoUrl)
+
 // In-memory store
 let _progress: Progress[] = []
 let _feedback: Feedback[] = []
 let _teamInterest: TeamInterest[] = []
-let _modules: Module[] = [...SEED_MODULES]
+let _modules: Module[] = [...SEED_MODULES, ...ADMIN_LIBRARY_MODULES]
 
 // Scroll reveal hook
 const useReveal = () => {
@@ -183,10 +198,11 @@ const Logo = ({ size = 48 }: { size?: number }) => (
 
 // Nav - simplified: Home, Plans, Ask (conversational AI), Connect, Our Team
 type Role = 'public' | 'teacher' | 'admin'
-const Nav = ({ page, setPage, role, setRole, teamRef }: {
+const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary }: {
   page: string; setPage: (p: string) => void
   role: Role; setRole: (r: Role) => void
   teamRef: React.RefObject<HTMLDivElement>
+  openAdminLibrary: () => void
 }) => {
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -208,7 +224,7 @@ const Nav = ({ page, setPage, role, setRole, teamRef }: {
       boxShadow: scrolled ? '0 4px 24px rgba(0,0,0,0.06)' : 'none',
     }}>
       <div className="container nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68, gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={() => setPage('home')} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none' }}>
+        <button onClick={() => setPage('home')} onDoubleClick={() => { if (role === 'admin') openAdminLibrary() }} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none' }}>
           <Logo size={38} />
           <span style={{ fontFamily: "'Playfair Display',serif", fontWeight: 700, fontSize: '1.3rem', color: C.olive, letterSpacing: '-0.3px' }}>Salad Bowl</span>
         </button>
@@ -323,6 +339,7 @@ const ModuleCard = ({ mod, onClick, completed }: { mod: Module; onClick: (m: Mod
       <div style={{ marginBottom: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         <span className={`tag tag-${TYPE_COLOR[mod.contentType]}`}>{TYPE_LABEL[mod.contentType]}</span>
         <span className="tag tag-saffron">{mod.ageLevel}</span>
+        {isAdminOnlyModule(mod) && <span className="tag tag-teal">Admin Only</span>}
       </div>
       <h3 style={{ fontSize: '1.08rem', fontWeight: 700, marginBottom: 10, lineHeight: 1.4, color: C.ink }}>{mod.title}</h3>
       <p style={{ fontSize: '0.88rem', color: '#777', lineHeight: 1.7, marginBottom: 16 }}>{mod.description.slice(0, 110)}...</p>
@@ -347,25 +364,137 @@ const StatBadge = ({ num, label, delay }: { num: string; label: string; delay: n
   </div>
 )
 
-// Home Page (IS the library - no separate library page)
-const HomePage = ({ setPage, setCurrentModule, teamRef }: {
+const LibraryCollection = ({
+  title,
+  subtitle,
+  modules,
+  setPage,
+  setCurrentModule,
+  completedIds,
+  emptyMessage,
+}: {
+  title: string
+  subtitle?: string
+  modules: Module[]
   setPage: (p: string) => void
   setCurrentModule: (m: Module) => void
-  teamRef: React.RefObject<HTMLDivElement>
+  completedIds: string[]
+  emptyMessage: string
 }) => {
   const [ageFilter, setAgeFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [durFilter, setDurFilter] = useState('all')
-  const completedIds = _progress.filter(p => p.completed).map(p => p.moduleId)
   const libraryReveal = useReveal()
 
-  const filtered = _modules.filter(m => m.isPublished).filter(m => {
+  const filtered = modules.filter(m => {
     if (ageFilter !== 'all' && m.ageLevel !== ageFilter) return false
     if (typeFilter !== 'all' && m.contentType !== typeFilter) return false
     if (durFilter === 'short' && m.durationMinutes > 15) return false
     if (durFilter === 'long' && m.durationMinutes <= 15) return false
     return true
   })
+
+  return (
+    <div ref={libraryReveal.ref} style={libraryReveal.style}>
+      <div className="library-filters" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h2 style={{ fontSize: '1.8rem', color: C.ink }}>{title}</h2>
+          {subtitle && <p style={{ marginTop: 8, fontSize: '0.92rem', color: '#888', lineHeight: 1.6, maxWidth: 640 }}>{subtitle}</p>}
+        </div>
+        <div className="library-filters" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select className="filter-select" value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
+            <option value="all">All Ages</option>
+            <option value="elementary">Elementary</option>
+            <option value="middle">Middle School</option>
+            <option value="high">High School</option>
+          </select>
+          <select className="filter-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="quick_skill">Quick Skills</option>
+            <option value="skill_journey">Skill Journeys</option>
+            <option value="cultural_moment">Cultural Moments</option>
+          </select>
+          <select className="filter-select" value={durFilter} onChange={e => setDurFilter(e.target.value)}>
+            <option value="all">Any Duration</option>
+            <option value="short">15 min or less</option>
+            <option value="long">Over 15 min</option>
+          </select>
+          {(ageFilter !== 'all' || typeFilter !== 'all' || durFilter !== 'all') && (
+            <button onClick={() => { setAgeFilter('all'); setTypeFilter('all'); setDurFilter('all') }}
+              style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: `${C.terra}14`, color: C.terra, fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {(() => {
+        const sections: { type: string; icon: string; label: string; desc: string; color: string; gradient: string }[] = [
+          { type: 'quick_skill', icon: '\u26A1', label: 'Quick Skills', desc: 'Short practices for transitions and resets.', color: C.terra, gradient: `linear-gradient(135deg,${C.terra}10,${C.terraL}08)` },
+          { type: 'skill_journey', icon: '\u{1F9D8}', label: 'Skill Journeys', desc: 'Multi-session deep dives into movement and breath.', color: C.olive, gradient: `linear-gradient(135deg,${C.olive}10,${C.oliveL}08)` },
+          { type: 'cultural_moment', icon: '\u{1F30D}', label: 'Cultural Moments', desc: 'Practices rooted in diverse traditions.', color: C.teal, gradient: `linear-gradient(135deg,${C.teal}10,${C.tealL}08)` },
+        ]
+        const visibleSections = typeFilter === 'all' ? sections : sections.filter(s => s.type === typeFilter)
+        const cols = visibleSections.map(sec => ({ ...sec, mods: filtered.filter(m => m.contentType === sec.type) })).filter(s => s.mods.length > 0)
+        if (cols.length === 0) return (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#bbb' }}>
+            <p style={{ fontSize: '1.05rem' }}>{emptyMessage}</p>
+          </div>
+        )
+        return (
+          <div className="library-cols" style={{
+            display: 'grid',
+            gridTemplateColumns: cols.length === 1 ? '1fr' : `repeat(${cols.length},1fr)`,
+            gap: 28, alignItems: 'start',
+          }}>
+            {cols.map(sec => (
+              <div key={sec.type} style={{
+                background: C.white, borderRadius: 22, border: `1px solid ${C.sand}`,
+                overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+              }}>
+                <div style={{
+                  padding: '24px 24px 20px', borderBottom: `1px solid ${C.sand}`,
+                  background: sec.gradient,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 12,
+                      background: `${sec.color}14`, border: `1.5px solid ${sec.color}20`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem',
+                    }}>{sec.icon}</div>
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', color: C.ink, fontWeight: 700, lineHeight: 1.2 }}>{sec.label}</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>{sec.desc}</p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: sec.color, background: `${sec.color}12`, padding: '3px 12px', borderRadius: 99 }}>
+                    {sec.mods.length} module{sec.mods.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {sec.mods.map((m, i) => (
+                    <div key={m.id} style={{ animation: `fadeUp 0.5s ${i * 0.08}s cubic-bezier(.22,1,.36,1) both` }}>
+                      <ModuleCard mod={m} onClick={mod => { setCurrentModule(mod); setPage('module') }} completed={completedIds.includes(m.id)} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+// Home Page (IS the library - no separate library page)
+const HomePage = ({ setPage, setCurrentModule, teamRef }: {
+  setPage: (p: string) => void
+  setCurrentModule: (m: Module) => void
+  teamRef: React.RefObject<HTMLDivElement>
+}) => {
+  const publicModules = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m))
+  const completedIds = _progress.filter(p => p.completed).map(p => p.moduleId)
 
   return (
     <div>
@@ -398,7 +527,7 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
             </button>
           </div>
           <div className="hero-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,auto)', gap: 16, justifyContent: 'center', marginTop: 56 }}>
-            <StatBadge num={`${_modules.filter(m => m.isPublished).length}`} label="Modules" delay={0.5} />
+            <StatBadge num={`${publicModules.length}`} label="Modules" delay={0.5} />
             <StatBadge num="4" label="Session Journey" delay={0.6} />
             <StatBadge num="5" label="CASEL Tags" delay={0.7} />
             <StatBadge num="K-12" label="Age Levels" delay={0.8} />
@@ -408,96 +537,14 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
 
       {/* Filter + Library */}
       <div className="container" style={{ paddingTop: 56 }}>
-        <div ref={libraryReveal.ref} style={libraryReveal.style}>
-          <div className="library-filters" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
-            <h2 style={{ fontSize: '1.8rem', color: C.ink }}>Content Library</h2>
-            {/* Clean dropdown filters */}
-            <div className="library-filters" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-              <select className="filter-select" value={ageFilter} onChange={e => setAgeFilter(e.target.value)}>
-                <option value="all">All Ages</option>
-                <option value="elementary">Elementary</option>
-                <option value="middle">Middle School</option>
-                <option value="high">High School</option>
-              </select>
-              <select className="filter-select" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-                <option value="all">All Types</option>
-                <option value="quick_skill">Quick Skills</option>
-                <option value="skill_journey">Skill Journeys</option>
-                <option value="cultural_moment">Cultural Moments</option>
-              </select>
-              <select className="filter-select" value={durFilter} onChange={e => setDurFilter(e.target.value)}>
-                <option value="all">Any Duration</option>
-                <option value="short">15 min or less</option>
-                <option value="long">Over 15 min</option>
-              </select>
-              {(ageFilter !== 'all' || typeFilter !== 'all' || durFilter !== 'all') && (
-                <button onClick={() => { setAgeFilter('all'); setTypeFilter('all'); setDurFilter('all') }}
-                  style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: `${C.terra}14`, color: C.terra, fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Organized by category — vertical columns */}
-        {(() => {
-          const sections: { type: string; icon: string; label: string; desc: string; color: string; gradient: string }[] = [
-            { type: 'quick_skill', icon: '\u26A1', label: 'Quick Skills', desc: 'Short practices for transitions and resets.', color: C.terra, gradient: `linear-gradient(135deg,${C.terra}10,${C.terraL}08)` },
-            { type: 'skill_journey', icon: '\u{1F9D8}', label: 'Skill Journeys', desc: 'Multi-session deep dives into movement and breath.', color: C.olive, gradient: `linear-gradient(135deg,${C.olive}10,${C.oliveL}08)` },
-            { type: 'cultural_moment', icon: '\u{1F30D}', label: 'Cultural Moments', desc: 'Practices rooted in diverse traditions.', color: C.teal, gradient: `linear-gradient(135deg,${C.teal}10,${C.tealL}08)` },
-          ]
-          const visibleSections = typeFilter === 'all' ? sections : sections.filter(s => s.type === typeFilter)
-          const cols = visibleSections.map(sec => ({ ...sec, mods: filtered.filter(m => m.contentType === sec.type) })).filter(s => s.mods.length > 0)
-          if (cols.length === 0) return (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: '#bbb' }}>
-              <p style={{ fontSize: '1.05rem' }}>No modules match these filters.</p>
-            </div>
-          )
-          return (
-            <div className="library-cols" style={{
-              display: 'grid',
-              gridTemplateColumns: cols.length === 1 ? '1fr' : `repeat(${cols.length},1fr)`,
-              gap: 28, alignItems: 'start',
-            }}>
-              {cols.map(sec => (
-                <div key={sec.type} style={{
-                  background: C.white, borderRadius: 22, border: `1px solid ${C.sand}`,
-                  overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
-                }}>
-                  {/* Column header */}
-                  <div style={{
-                    padding: '24px 24px 20px', borderBottom: `1px solid ${C.sand}`,
-                    background: sec.gradient,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 12,
-                        background: `${sec.color}14`, border: `1.5px solid ${sec.color}20`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem',
-                      }}>{sec.icon}</div>
-                      <div>
-                        <h3 style={{ fontSize: '1.05rem', color: C.ink, fontWeight: 700, lineHeight: 1.2 }}>{sec.label}</h3>
-                        <p style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>{sec.desc}</p>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: sec.color, background: `${sec.color}12`, padding: '3px 12px', borderRadius: 99 }}>
-                      {sec.mods.length} module{sec.mods.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  {/* Stacked cards */}
-                  <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {sec.mods.map((m, i) => (
-                      <div key={m.id} style={{ animation: `fadeUp 0.5s ${i * 0.08}s cubic-bezier(.22,1,.36,1) both` }}>
-                        <ModuleCard mod={m} onClick={mod => { setCurrentModule(mod); setPage('module') }} completed={completedIds.includes(m.id)} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        })()}
+        <LibraryCollection
+          title="Content Library"
+          modules={publicModules}
+          setPage={setPage}
+          setCurrentModule={setCurrentModule}
+          completedIds={completedIds}
+          emptyMessage="No modules match these filters."
+        />
         <div style={{ paddingBottom: 60 }} />
       </div>
 
@@ -549,6 +596,8 @@ const ModulePage = ({ mod, setPage }: { mod: Module; setPage: (p: string) => voi
   const [reflection, setReflection] = useState('')
   const [completed, setCompleted] = useState(() => _progress.some(p => p.moduleId === mod.id && p.completed))
   const [saved, setSaved] = useState(false)
+  const backTarget = isAdminOnlyModule(mod) ? 'admin-library' : 'home'
+  const backLabel = isAdminOnlyModule(mod) ? 'Back to Private Library' : 'Back to Library'
 
   const markComplete = () => {
     if (!completed) {
@@ -558,18 +607,21 @@ const ModulePage = ({ mod, setPage }: { mod: Module; setPage: (p: string) => voi
   }
   return (
     <div className="fade-up container" style={{ paddingTop: 48, paddingBottom: 80, maxWidth: 820 }}>
-      <button className="btn-ghost" onClick={() => setPage('home')} style={{ marginBottom: 28 }}>
-        <span style={{ marginRight: 6 }}>&larr;</span> Back to Library
+      <button className="btn-ghost" onClick={() => setPage(backTarget)} style={{ marginBottom: 28 }}>
+        <span style={{ marginRight: 6 }}>&larr;</span> {backLabel}
       </button>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         <span className={`tag tag-${TYPE_COLOR[mod.contentType]}`}>{TYPE_LABEL[mod.contentType]}</span>
         <span className="tag tag-saffron">{mod.ageLevel}</span>
+        {isAdminOnlyModule(mod) && <span className="tag tag-teal">Admin Only</span>}
         {mod.caselTags.map(t => <span key={t} className="tag tag-teal">{t}</span>)}
       </div>
       <h1 style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', marginBottom: 14, color: C.ink, lineHeight: 1.2 }}>{mod.title}</h1>
       <p style={{ fontSize: '1.05rem', color: '#666', marginBottom: 36, lineHeight: 1.75 }}>{mod.description}</p>
       <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 40, boxShadow: '0 8px 40px rgba(0,0,0,0.12)', background: '#000', aspectRatio: '16/9' }}>
-        <iframe src={mod.videoUrl} title={mod.title} width="100%" height="100%" style={{ border: 'none', display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        {isFileModule(mod)
+          ? <video src={mod.videoUrl} title={mod.title} controls playsInline style={{ width: '100%', height: '100%', display: 'block', background: '#000' }} />
+          : <iframe src={mod.videoUrl} title={mod.title} width="100%" height="100%" style={{ border: 'none', display: 'block' }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />}
       </div>
       <div style={{ background: `linear-gradient(135deg,${C.olive}08,${C.teal}06)`, borderRadius: 20, padding: 32, marginBottom: 28, border: `1px solid ${C.olive}12` }}>
         <h3 style={{ fontSize: '1.1rem', color: C.olive, marginBottom: 18 }}>Learning Goals</h3>
@@ -995,6 +1047,34 @@ const TeacherDashboard = () => {
   )
 }
 
+const AdminLibraryPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void }) => {
+  const adminModules = _modules.filter(isAdminOnlyModule)
+  const completedIds = _progress.filter(p => p.completed).map(p => p.moduleId)
+
+  return (
+    <div className="fade-up">
+      <div className="page-header" style={{ background: `linear-gradient(155deg,${C.ink},${C.teal}cc,${C.olive}cc)` }}>
+        <h1>Private Video Library</h1>
+        <p>Hidden admin-only clips stored separately from the public content library.</p>
+      </div>
+      <div className="container section">
+        <button className="btn-ghost" onClick={() => setPage('admin')} style={{ marginBottom: 24 }}>
+          <span style={{ marginRight: 6 }}>&larr;</span> Back to Admin Dashboard
+        </button>
+        <LibraryCollection
+          title="Admin Video Library"
+          subtitle="These clips are only exposed in the admin section and do not appear in the public content library or recommendations."
+          modules={adminModules}
+          setPage={setPage}
+          setCurrentModule={setCurrentModule}
+          completedIds={completedIds}
+          emptyMessage="No private admin clips are available yet."
+        />
+      </div>
+    </div>
+  )
+}
+
 // Admin Dashboard
 const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void }) => {
   const [activeTab, setActiveTab] = useState('modules')
@@ -1056,8 +1136,13 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
         <p>Manage content, analytics, and submissions.</p>
       </div>
       <div className="container section">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
+          <button className="btn-secondary" onClick={() => setPage('admin-library')}>
+            Open Private Video Library
+          </button>
+        </div>
         <div className="dash-stats-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 18, marginBottom: 40 }}>
-          {([['Total Modules', _modules.length, '\u{1F4E6}'], ['Published', _modules.filter(m => m.isPublished).length, '\u2705'], ['Feedback', allFeedback.length, '\u{1F4AC}'], ['Team Submissions', allTeam.length, '\u{1F465}']] as [string, number, string][]).map(([l, v, icon]) => (
+          {([['Total Modules', _modules.length, '\u{1F4E6}'], ['Public Library', _modules.filter(m => m.isPublished && !isAdminOnlyModule(m)).length, '\u2705'], ['Private Clips', _modules.filter(isAdminOnlyModule).length, '\u{1F512}'], ['Team Submissions', allTeam.length, '\u{1F465}']] as [string, number, string][]).map(([l, v, icon]) => (
             <div key={l} style={{ background: C.white, borderRadius: 18, padding: '26px 24px', textAlign: 'center', border: `1px solid ${C.sand}` }}>
               <div style={{ fontSize: '1.2rem', marginBottom: 6 }}>{icon}</div>
               <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: "'Playfair Display',serif", color: C.olive }}>{v}</div>
@@ -1082,7 +1167,7 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: i < _modules.length - 1 ? `1px solid ${C.sand}` : 'none', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.93rem' }}>{m.title}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>{m.durationMinutes} min | {m.ageLevel} | {m.contentType}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>{m.durationMinutes} min | {m.ageLevel} | {m.contentType}{isAdminOnlyModule(m) ? ' | admin-only' : ''}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => togglePublish(m.id)} style={{ padding: '5px 14px', borderRadius: 99, border: 'none', background: m.isPublished ? `${C.olive}16` : C.sand, color: m.isPublished ? C.olive : '#999', fontWeight: 700, fontSize: '0.78rem' }}>{m.isPublished ? 'Published' : 'Draft'}</button>
@@ -1210,7 +1295,7 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
 
 // App
 export default function App() {
-  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin'].includes(h) ? h : 'home' }
+  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library'].includes(h) ? h : 'home' }
   const [page, setPage] = useState(getPageFromHash)
   const [role, setRole] = useState<Role>('public')
   const [currentModule, setCurrentModule] = useState<Module | null>(null)
@@ -1224,11 +1309,23 @@ export default function App() {
 
   const navigateTo = (p: string) => { setPage(p); window.location.hash = p === 'home' ? '' : p; window.scrollTo({ top: 0, behavior: 'smooth' }) }
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (role !== 'admin') return
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'l') {
+        event.preventDefault()
+        navigateTo('admin-library')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [role])
+
   return (
     <>
       <style>{globalStyles}</style>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Nav page={page} setPage={navigateTo} role={role} setRole={setRole} teamRef={teamRef} />
+        <Nav page={page} setPage={navigateTo} role={role} setRole={setRole} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} />
         <main style={{ flex: 1 }}>
           {page === 'home' && <HomePage setPage={navigateTo} setCurrentModule={setCurrentModule} teamRef={teamRef} />}
           {page === 'module' && currentModule && <ModulePage mod={currentModule} setPage={navigateTo} />}
@@ -1237,10 +1334,17 @@ export default function App() {
           {page === 'connect' && <BuildWithUsPage />}
           {page === 'teacher' && (role === 'teacher' || role === 'admin') && <TeacherDashboard />}
           {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} />}
+          {page === 'admin-library' && role === 'admin' && <AdminLibraryPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'teacher' && role === 'public' && (
             <div style={{ textAlign: 'center', padding: '100px 24px', color: '#bbb' }}>
               <h2 style={{ fontWeight: 700 }}>Teacher access required</h2>
               <p style={{ marginTop: 8, color: '#999' }}>Switch to Teacher or Admin role to view this page.</p>
+            </div>
+          )}
+          {page === 'admin-library' && role !== 'admin' && (
+            <div style={{ textAlign: 'center', padding: '100px 24px', color: '#bbb' }}>
+              <h2 style={{ fontWeight: 700 }}>Admin access required</h2>
+              <p style={{ marginTop: 8, color: '#999' }}>This private library is hidden unless the site is in Admin role.</p>
             </div>
           )}
         </main>
