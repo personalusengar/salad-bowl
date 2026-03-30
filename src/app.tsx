@@ -216,9 +216,13 @@ const Logo = ({ size = 48 }: { size?: number }) => (
 
 // Nav - simplified: Home, Plans, Ask (conversational AI), Connect, Our Team
 type Role = 'public' | 'teacher' | 'admin'
-const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary, teacher, onLogout }: {
+
+// Admin emails — teachers with these emails get admin access on login
+const ADMIN_EMAILS = ['urvi@saladbowl.life', 'akriti@saladbowl.life', 'admin@saladbowl.life']
+
+const Nav = ({ page, setPage, role, teamRef, openAdminLibrary, teacher, onLogout }: {
   page: string; setPage: (p: string) => void
-  role: Role; setRole: (r: Role) => void
+  role: Role
   teamRef: React.RefObject<HTMLDivElement>
   openAdminLibrary: () => void
   teacher: TeacherAuth | null; onLogout: () => void
@@ -274,12 +278,6 @@ const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary, teacher,
               <button onClick={onLogout} style={{ padding: '5px 14px', borderRadius: 99, border: `1.5px solid ${C.terra}30`, background: `${C.terra}08`, color: C.terra, fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}>Logout</button>
             </div>
           )}
-          <select className="filter-select" style={{ marginLeft: 8, minWidth: 'auto', padding: '6px 30px 6px 12px', fontSize: '0.78rem', fontWeight: 600, borderRadius: 99, opacity: 0.5 }}
-            value={role} onChange={e => setRole(e.target.value as Role)}>
-            <option value="public">Public</option>
-            <option value="teacher">Teacher</option>
-            <option value="admin">Admin</option>
-          </select>
         </div>
       </div>
     </nav>
@@ -1848,7 +1846,6 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
 export default function App() {
   const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library','login','module','profile'].includes(h) ? h : 'home' }
   const [page, setPage] = useState(getPageFromHash)
-  const [role, setRole] = useState<Role>('public')
   const [currentModule, setCurrentModule] = useState<Module | null>(null)
   const teamRef = useRef<HTMLDivElement>(null)
 
@@ -1857,10 +1854,12 @@ export default function App() {
     try { const s = localStorage.getItem('sb_teacher'); return s ? JSON.parse(s) : null } catch { return null }
   })
 
+  // Role is derived from auth state — no manual toggle
+  const role: Role = teacher ? (ADMIN_EMAILS.includes(teacher.email.toLowerCase()) ? 'admin' : 'teacher') : 'public'
+
   const handleLogin = (t: TeacherAuth) => {
     setTeacher(t)
     localStorage.setItem('sb_teacher', JSON.stringify(t))
-    setRole('teacher')
     navigateTo('teacher')
   }
 
@@ -1872,12 +1871,8 @@ export default function App() {
   const handleLogout = () => {
     setTeacher(null)
     localStorage.removeItem('sb_teacher')
-    setRole('public')
     navigateTo('home')
   }
-
-  // If a teacher is stored, default role to teacher
-  useEffect(() => { if (teacher) setRole('teacher') }, [])
 
   useEffect(() => {
     const onHash = () => { const p = getPageFromHash(); setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }
@@ -1903,7 +1898,7 @@ export default function App() {
     <>
       <style>{globalStyles}</style>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Nav page={page} setPage={navigateTo} role={role} setRole={setRole} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} teacher={teacher} onLogout={handleLogout} />
+        <Nav page={page} setPage={navigateTo} role={role} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} teacher={teacher} onLogout={handleLogout} />
         <main style={{ flex: 1 }}>
           {page === 'home' && <HomePage setPage={navigateTo} setCurrentModule={setCurrentModule} teamRef={teamRef} />}
           {page === 'module' && currentModule && <ModulePage mod={currentModule} setPage={navigateTo} />}
