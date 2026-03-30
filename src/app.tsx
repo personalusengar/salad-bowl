@@ -23,7 +23,7 @@ interface Feedback { id: string; message: string; emotionalState: string | null;
 interface TeamInterest { id: string; name: string; email: string; role: string; organization: string; contribution: string; excitement: string; skills: string; wantsUpdates: boolean; phone: string; createdAt: Date }
 interface TeamPerson { name: string; title: string; emoji: string; image?: string; subtitles?: string[] }
 interface ChatMsg { role: 'user' | 'assistant'; text: string; modules?: Module[] }
-interface TeacherAuth { id: number; name: string; email: string; school: string }
+interface TeacherAuth { id: number; name: string; email: string; school: string; createdAt?: string }
 interface Resource { id: string; moduleId: string; title: string; description: string; fileUrl: string; fileType: 'pdf' | 'doc' | 'image' | 'other'; timing: 'before' | 'after' | 'both'; uploadedBy: string; createdAt: Date }
 
 // Team Data
@@ -262,7 +262,15 @@ const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary, teacher,
           )}
           {teacher && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12 }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: C.olive, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher.name}</span>
+              <button onClick={() => setPage('profile')} style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 99,
+                border: `1.5px solid ${C.olive}25`, background: `${C.olive}06`, cursor: 'pointer', transition: 'all 0.2s',
+              }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = `${C.olive}14`}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = `${C.olive}06`}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: `linear-gradient(135deg,${C.olive},${C.tealL})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 900, color: 'white' }}>{teacher.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: C.olive, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher.name.split(' ')[0]}</span>
+              </button>
               <button onClick={onLogout} style={{ padding: '5px 14px', borderRadius: 99, border: `1.5px solid ${C.terra}30`, background: `${C.terra}08`, color: C.terra, fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}>Logout</button>
             </div>
           )}
@@ -1429,6 +1437,167 @@ const TeacherDashboard = () => {
   )
 }
 
+// Teacher Profile Page
+const TeacherProfilePage = ({ teacher, setPage, onLogout, onUpdate }: {
+  teacher: TeacherAuth; setPage: (p: string) => void; onLogout: () => void
+  onUpdate: (t: TeacherAuth) => void
+}) => {
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState({ name: teacher.name, school: teacher.school })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
+
+  const completedCount = _progress.filter(p => p.completed).length
+  const totalMinutes = _progress.filter(p => p.completed).reduce((s, p) => s + (p.timeWatchedEstimate || 0), 0)
+  const modulesEngaged = new Set(_progress.filter(p => p.completed).map(p => p.moduleId)).size
+  const resourcesCount = _resources.length
+  const joinDate = teacher.createdAt ? new Date(teacher.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Recently'
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return
+    setSaving(true)
+    // Update local state
+    const updated = { ...teacher, name: form.name, school: form.school }
+    onUpdate(updated)
+    setSaving(false)
+    setSaved(true)
+    setEditing(false)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const initials = teacher.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
+  return (
+    <div className="fade-up">
+      <div className="page-header" style={{ background: `linear-gradient(155deg,${C.olive},${C.tealL}ee,${C.olive}cc)`, paddingBottom: 100 }}>
+        <h1>My Profile</h1>
+        <p>Your teaching journey with Salad Bowl</p>
+      </div>
+
+      <div className="container" style={{ maxWidth: 720, margin: '0 auto', marginTop: -60 }}>
+        {/* Profile card */}
+        <div style={{ background: C.white, borderRadius: 24, padding: '40px 40px 36px', border: `1px solid ${C.sand}`, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', marginBottom: 28, position: 'relative' }}>
+          {saved && (
+            <div style={{ position: 'absolute', top: 16, right: 20, background: `${C.olive}14`, color: C.olive, padding: '6px 16px', borderRadius: 99, fontSize: '0.82rem', fontWeight: 600 }}>Profile updated!</div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 32, flexWrap: 'wrap' }}>
+            {/* Avatar */}
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: `linear-gradient(135deg,${C.olive},${C.tealL})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.6rem', fontWeight: 900, color: 'white', flexShrink: 0,
+              boxShadow: `0 4px 20px ${C.olive}33`,
+            }}>{initials}</div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              {!editing ? (
+                <>
+                  <h2 style={{ fontSize: '1.5rem', color: C.ink, marginBottom: 4, lineHeight: 1.2 }}>{teacher.name}</h2>
+                  <p style={{ fontSize: '0.92rem', color: '#999', marginBottom: 2 }}>{teacher.email}</p>
+                  {teacher.school && <p style={{ fontSize: '0.88rem', color: C.olive, fontWeight: 500 }}>{teacher.school}</p>}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 4 }}>Name</label>
+                    <input className="input-field" value={form.name} onChange={e => set('name', e.target.value)} style={{ padding: '10px 14px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 4 }}>School</label>
+                    <input className="input-field" value={form.school} onChange={e => set('school', e.target.value)} placeholder="Your school or organization" style={{ padding: '10px 14px' }} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {editing ? (
+                <>
+                  <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', borderRadius: 99, border: 'none', background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>{saving ? 'Saving...' : 'Save'}</button>
+                  <button onClick={() => { setEditing(false); setForm({ name: teacher.name, school: teacher.school }) }} style={{ padding: '8px 20px', borderRadius: 99, border: `1.5px solid ${C.sand}`, background: 'transparent', color: '#999', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>Cancel</button>
+                </>
+              ) : (
+                <button onClick={() => setEditing(true)} style={{ padding: '8px 20px', borderRadius: 99, border: `1.5px solid ${C.olive}30`, background: `${C.olive}06`, color: C.olive, fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.2s' }}>Edit Profile</button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
+            {[
+              { label: 'Sessions', value: completedCount, icon: '\u2705', color: C.olive },
+              { label: 'Minutes', value: totalMinutes, icon: '\u23F1', color: C.terra },
+              { label: 'Modules', value: modulesEngaged, icon: '\u{1F4DA}', color: C.teal },
+              { label: 'Resources', value: resourcesCount, icon: '\u{1F4CE}', color: C.saffron },
+            ].map(s => (
+              <div key={s.label} style={{ background: `${s.color}06`, borderRadius: 16, padding: '18px 16px', textAlign: 'center', border: `1px solid ${s.color}12` }}>
+                <div style={{ fontSize: '0.95rem', marginBottom: 4 }}>{s.icon}</div>
+                <div style={{ fontSize: '1.5rem', fontFamily: "'Playfair Display',serif", fontWeight: 900, color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 500 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Account details */}
+        <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}`, marginBottom: 28 }}>
+          <h3 style={{ fontSize: '1rem', color: C.ink, marginBottom: 20, fontWeight: 700 }}>Account Details</h3>
+          <div style={{ display: 'grid', gap: 16 }}>
+            {[
+              { label: 'Email', value: teacher.email },
+              { label: 'School / Organization', value: teacher.school || 'Not specified' },
+              { label: 'Member Since', value: joinDate },
+              { label: 'Account ID', value: `#${teacher.id}` },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.sand}` }}>
+                <span style={{ fontSize: '0.88rem', color: '#999', fontWeight: 500 }}>{item.label}</span>
+                <span style={{ fontSize: '0.92rem', color: C.ink, fontWeight: 600 }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick links */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
+          <button onClick={() => setPage('teacher')} style={{
+            background: `linear-gradient(135deg,${C.olive}08,${C.teal}06)`, border: `1.5px solid ${C.olive}18`,
+            borderRadius: 18, padding: '24px 20px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
+          }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = C.olive}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = `${C.olive}18`}>
+            <div style={{ fontSize: '1.3rem', marginBottom: 8 }}>{'\u{1F4CA}'}</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: C.ink, marginBottom: 4 }}>Teacher Dashboard</div>
+            <div style={{ fontSize: '0.82rem', color: '#999' }}>View engagement data & resources</div>
+          </button>
+          <button onClick={() => setPage('home')} style={{
+            background: `linear-gradient(135deg,${C.terra}06,${C.saffron}06)`, border: `1.5px solid ${C.terra}18`,
+            borderRadius: 18, padding: '24px 20px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
+          }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = C.terra}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = `${C.terra}18`}>
+            <div style={{ fontSize: '1.3rem', marginBottom: 8 }}>{'\u{1F4DA}'}</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: C.ink, marginBottom: 4 }}>Content Library</div>
+            <div style={{ fontSize: '0.82rem', color: '#999' }}>Browse modules & sessions</div>
+          </button>
+        </div>
+
+        {/* Logout */}
+        <div style={{ textAlign: 'center', padding: '16px 0 40px' }}>
+          <button onClick={onLogout} style={{
+            padding: '12px 32px', borderRadius: 60, border: `2px solid ${C.terra}30`,
+            background: 'transparent', color: C.terra, fontWeight: 700, fontSize: '0.9rem',
+            cursor: 'pointer', transition: 'all 0.3s',
+          }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `${C.terra}08` }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const AdminLibraryPage = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void }) => {
   const adminModules = _modules.filter(isAdminOnlyModule)
   const completedIds = _progress.filter(p => p.completed).map(p => p.moduleId)
@@ -1677,7 +1846,7 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
 
 // App
 export default function App() {
-  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library','login','module'].includes(h) ? h : 'home' }
+  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library','login','module','profile'].includes(h) ? h : 'home' }
   const [page, setPage] = useState(getPageFromHash)
   const [role, setRole] = useState<Role>('public')
   const [currentModule, setCurrentModule] = useState<Module | null>(null)
@@ -1693,6 +1862,11 @@ export default function App() {
     localStorage.setItem('sb_teacher', JSON.stringify(t))
     setRole('teacher')
     navigateTo('teacher')
+  }
+
+  const handleProfileUpdate = (t: TeacherAuth) => {
+    setTeacher(t)
+    localStorage.setItem('sb_teacher', JSON.stringify(t))
   }
 
   const handleLogout = () => {
@@ -1739,6 +1913,8 @@ export default function App() {
           {page === 'login' && <LoginPage onLogin={handleLogin} />}
           {page === 'teacher' && teacher && <TeacherDashboard />}
           {page === 'teacher' && !teacher && <LoginPage onLogin={handleLogin} />}
+          {page === 'profile' && teacher && <TeacherProfilePage teacher={teacher} setPage={navigateTo} onLogout={handleLogout} onUpdate={handleProfileUpdate} />}
+          {page === 'profile' && !teacher && <LoginPage onLogin={handleLogin} />}
           {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'admin-library' && role === 'admin' && <AdminLibraryPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'admin-library' && role !== 'admin' && (
