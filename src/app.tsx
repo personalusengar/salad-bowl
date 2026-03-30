@@ -259,7 +259,7 @@ const Nav = ({ page, setPage, role, teamRef, openAdminLibrary, teacher, onLogout
           {teacher ? (
             <button className={`nav-link ${page === 'teacher' ? 'active' : ''}`} onClick={() => setPage('teacher')}>Dashboard</button>
           ) : (
-            <button className={`nav-link ${page === 'login' ? 'active' : ''}`} onClick={() => setPage('login')} style={{ color: C.terra, fontWeight: 600 }}>Teacher Login</button>
+            <button className={`nav-link ${page === 'login' ? 'active' : ''}`} onClick={() => setPage('login')} style={{ color: C.terra, fontWeight: 600 }}>Login</button>
           )}
           {role === 'admin' && (
             <button className={`nav-link ${page === 'admin' ? 'active' : ''}`} onClick={() => setPage('admin')}>Admin</button>
@@ -1079,7 +1079,7 @@ const BuildWithUsPage = () => {
 // Login / Register Page
 const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login')
-  const [form, setForm] = useState({ name: '', email: '', password: '', school: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', school: '', userRole: 'educator' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
@@ -1111,10 +1111,10 @@ const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <Logo size={64} />
           <h1 style={{ fontSize: '1.8rem', color: C.ink, marginTop: 16, marginBottom: 6 }}>
-            {mode === 'login' ? 'Teacher Login' : 'Create Account'}
+            {mode === 'login' ? 'Welcome Back' : 'Create Your Account'}
           </h1>
           <p style={{ color: '#999', fontSize: '0.95rem', lineHeight: 1.6 }}>
-            {mode === 'login' ? 'Sign in to access your teacher dashboard.' : 'Register to get started with Salad Bowl.'}
+            {mode === 'login' ? 'Sign in to access your dashboard and resources.' : 'Join Salad Bowl to bring wellness into your classroom.'}
           </p>
         </div>
 
@@ -1137,10 +1137,35 @@ const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
             <input className="input-field" type="password" placeholder={mode === 'register' ? 'Choose a password' : 'Your password'} value={form.password} onChange={e => set('password', e.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
           </div>
           {mode === 'register' && (
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>School <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label>
-              <input className="input-field" placeholder="School or organization" value={form.school} onChange={e => set('school', e.target.value)} />
-            </div>
+            <>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>I am a... *</label>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'educator', label: 'Educator', icon: '\u{1F3EB}', desc: 'Teacher, counselor, or school staff' },
+                    { id: 'administrator', label: 'Administrator', icon: '\u{1F4CB}', desc: 'Principal, director, or program lead' },
+                    { id: 'other', label: 'Other', icon: '\u{1F331}', desc: 'Parent, volunteer, or community member' },
+                  ].map(r => {
+                    const selected = form.userRole === r.id
+                    return (
+                      <button type="button" key={r.id} onClick={() => set('userRole', r.id)} style={{
+                        flex: '1 1 120px', padding: '12px 14px', borderRadius: 14, textAlign: 'left', cursor: 'pointer',
+                        border: `2px solid ${selected ? C.olive : C.sand}`,
+                        background: selected ? `${C.olive}08` : C.white, transition: 'all 0.2s',
+                      }}>
+                        <div style={{ fontSize: '1.1rem', marginBottom: 4 }}>{r.icon}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: selected ? C.olive : C.ink }}>{r.label}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#999', marginTop: 2 }}>{r.desc}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>School / Organization <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label>
+                <input className="input-field" placeholder="School or organization name" value={form.school} onChange={e => set('school', e.target.value)} />
+              </div>
+            </>
           )}
 
           {error && (
@@ -1175,7 +1200,7 @@ const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
 
 // Teacher Dashboard
 const TeacherDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'resources'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'engagement' | 'resources'>('overview')
   const [, forceUpdate] = useState(0)
   const completed = _progress.filter(p => p.completed)
   const totalTime = completed.reduce((s, p) => s + (p.timeWatchedEstimate || 0), 0)
@@ -1228,7 +1253,7 @@ const TeacherDashboard = () => {
     </div>
   )
 
-  const DashTab = ({ id, label }: { id: 'overview' | 'resources'; label: string }) => (
+  const DashTab = ({ id, label }: { id: 'overview' | 'engagement' | 'resources'; label: string }) => (
     <button onClick={() => setActiveTab(id)} style={{
       padding: '10px 24px', borderRadius: '99px', border: 'none',
       background: activeTab === id ? C.olive : 'transparent',
@@ -1240,14 +1265,15 @@ const TeacherDashboard = () => {
   return (
     <div className="fade-up">
       <div className="page-header" style={{ background: `linear-gradient(155deg,${C.olive},${C.teal}ee)` }}>
-        <h1>Teacher Dashboard</h1>
+        <h1>Educator Dashboard</h1>
         <p>Manage your classroom resources, engagement data, and session materials.</p>
       </div>
       <div className="container section">
         {/* Tab switcher */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content', flexWrap: 'wrap' }}>
           <DashTab id="overview" label="Overview" />
-          <DashTab id="resources" label={`Materials & Resources (${_resources.length})`} />
+          <DashTab id="engagement" label="Student Engagement" />
+          <DashTab id="resources" label={`Materials (${_resources.length})`} />
         </div>
 
         {activeTab === 'overview' && (
@@ -1286,6 +1312,157 @@ const TeacherDashboard = () => {
               </div>
             </div>
           </>
+        )}
+
+        {activeTab === 'engagement' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: '1.5rem', color: C.ink, marginBottom: 6 }}>Student Engagement Tracker</h2>
+              <p style={{ color: '#999', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: 600 }}>Track how your students are participating, what resonates, and where to focus next.</p>
+            </div>
+
+            {/* Participation overview cards */}
+            {(() => {
+              const totalModules = publicModules.length
+              const completedModules = Object.keys(byModule).length
+              const completionRate = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0
+              const avgSessionTime = completed.length > 0 ? Math.round(totalTime / completed.length) : 0
+              const repeatSessions = completed.length > completedModules ? completed.length - completedModules : 0
+              const caselAll = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m)).flatMap(m => m.caselTags)
+              const caselUnique = [...new Set(caselAll)]
+              const caselCovered = caselUnique.filter(tag => {
+                const modsWithTag = _modules.filter(m => m.caselTags.includes(tag) && byModule[m.id])
+                return modsWithTag.length > 0
+              })
+
+              return (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 16, marginBottom: 32 }}>
+                    {[
+                      { label: 'Library Completion', value: `${completionRate}%`, sub: `${completedModules} of ${totalModules} modules`, color: C.olive, icon: '\u{1F3AF}' },
+                      { label: 'Avg Session Length', value: `${avgSessionTime} min`, sub: 'per completed session', color: C.terra, icon: '\u23F1' },
+                      { label: 'Repeat Sessions', value: `${repeatSessions}`, sub: 'modules done more than once', color: C.teal, icon: '\u{1F504}' },
+                      { label: 'CASEL Coverage', value: `${caselCovered.length}/${caselUnique.length}`, sub: 'competencies practiced', color: C.saffron, icon: '\u{1F9E0}' },
+                    ].map(s => (
+                      <div key={s.label} style={{ background: C.white, borderRadius: 18, padding: '24px 20px', border: `1px solid ${C.sand}`, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: -8, right: -8, width: 50, height: 50, borderRadius: '50%', background: `${s.color}06` }} />
+                        <div style={{ fontSize: '1.1rem', marginBottom: 8, position: 'relative' }}>{s.icon}</div>
+                        <div style={{ fontSize: '1.8rem', fontFamily: "'Playfair Display',serif", fontWeight: 900, color: s.color, marginBottom: 2, position: 'relative' }}>{s.value}</div>
+                        <div style={{ fontSize: '0.78rem', color: '#999', fontWeight: 500, position: 'relative' }}>{s.label}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#bbb', marginTop: 4, position: 'relative' }}>{s.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CASEL competency breakdown */}
+                  <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.teal, marginBottom: 6, fontSize: '1rem' }}>CASEL Competencies Practiced</h3>
+                      <p style={{ fontSize: '0.8rem', color: '#bbb', marginBottom: 20 }}>Which social-emotional skills your students are building</p>
+                      {caselUnique.map(tag => {
+                        const modsWithTag = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m) && m.caselTags.includes(tag))
+                        const completedWithTag = modsWithTag.filter(m => byModule[m.id]).length
+                        const pct = modsWithTag.length > 0 ? Math.round((completedWithTag / modsWithTag.length) * 100) : 0
+                        return (
+                          <div key={tag} style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.85rem' }}>
+                              <span style={{ fontWeight: 600, color: C.ink }}>{tag}</span>
+                              <span style={{ color: pct > 0 ? C.olive : '#ccc', fontWeight: 700, fontSize: '0.82rem' }}>{pct}%</span>
+                            </div>
+                            <div style={{ height: 8, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: 8, borderRadius: 99, background: `linear-gradient(135deg,${C.teal},${C.tealL})`, width: `${pct}%`, transition: 'width 0.8s ease' }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Energy Level Distribution</h3>
+                      <p style={{ fontSize: '0.8rem', color: '#bbb', marginBottom: 20 }}>What energy types your students have engaged with</p>
+                      {(() => {
+                        const energyTypes = ['calm', 'focused', 'active']
+                        const ENERGY_ICONS: Record<string, string> = { calm: '\u{1F9D8}', focused: '\u{1F3AF}', active: '\u26A1' }
+                        const ENERGY_COLORS: Record<string, string> = { calm: C.teal, focused: C.saffron, active: C.terra }
+                        const energyCounts: Record<string, number> = {}
+                        completed.forEach(p => {
+                          const m = _modules.find(x => x.id === p.moduleId)
+                          if (m) energyCounts[m.energyLevel] = (energyCounts[m.energyLevel] || 0) + 1
+                        })
+                        const totalEnergy = Object.values(energyCounts).reduce((a, b) => a + b, 0)
+                        return energyTypes.map(e => {
+                          const count = energyCounts[e] || 0
+                          const pct = totalEnergy > 0 ? Math.round((count / totalEnergy) * 100) : 0
+                          return (
+                            <div key={e} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: `1px solid ${C.sand}` }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 10, background: `${ENERGY_COLORS[e]}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>{ENERGY_ICONS[e]}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: '0.85rem' }}>
+                                  <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{e}</span>
+                                  <span style={{ fontWeight: 700, color: ENERGY_COLORS[e] }}>{count} session{count !== 1 ? 's' : ''} ({pct}%)</span>
+                                </div>
+                                <div style={{ height: 6, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
+                                  <div style={{ height: 6, borderRadius: 99, background: ENERGY_COLORS[e], width: `${pct}%`, transition: 'width 0.6s' }} />
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      })()}
+
+                      {completed.length === 0 && <p style={{ color: '#bbb', marginTop: 12, fontSize: '0.88rem' }}>Complete some sessions to see energy distribution.</p>}
+                    </div>
+                  </div>
+
+                  {/* Module-by-module participation */}
+                  <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}`, marginBottom: 28 }}>
+                    <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Module Participation Detail</h3>
+                    <p style={{ fontSize: '0.8rem', color: '#bbb', marginBottom: 20 }}>See which modules have been used and how often</p>
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      {publicModules.map(m => {
+                        const count = byModule[m.id] || 0
+                        const hasResources = _resources.filter(r => r.moduleId === m.id).length
+                        return (
+                          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', borderRadius: 14, border: `1px solid ${count > 0 ? `${C.olive}20` : C.sand}`, background: count > 0 ? `${C.olive}04` : C.white, transition: 'all 0.2s' }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 12, background: count > 0 ? `linear-gradient(135deg,${C.olive},${C.oliveL})` : C.sand, display: 'flex', alignItems: 'center', justifyContent: 'center', color: count > 0 ? 'white' : '#999', fontSize: '0.78rem', fontWeight: 800, flexShrink: 0 }}>{count > 0 ? count : '—'}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.9rem', color: C.ink }}>{m.title}</span>
+                                <span className={`tag tag-${TYPE_COLOR[m.contentType]}`} style={{ fontSize: '0.65rem', padding: '2px 8px' }}>{TYPE_LABEL[m.contentType]}</span>
+                                {hasResources > 0 && <span style={{ fontSize: '0.68rem', color: '#bbb' }}>{hasResources} resource{hasResources !== 1 ? 's' : ''}</span>}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>{m.durationMinutes} min · {m.energyLevel} · {m.ageLevel}</div>
+                            </div>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: count > 0 ? C.olive : '#ccc' }}>{count > 0 ? 'Used' : 'Not yet'}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Quick insights */}
+                  <div style={{ background: `linear-gradient(135deg,${C.olive}06,${C.teal}06)`, borderRadius: 20, padding: 32, border: `1px solid ${C.olive}12` }}>
+                    <h3 style={{ color: C.olive, marginBottom: 16, fontSize: '1rem' }}>Quick Insights</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+                      {[
+                        { icon: '\u{1F4A1}', title: 'Most Popular', text: topModules.length > 0 ? `"${_modules.find(m => m.id === topModules[0][0])?.title}" has been completed ${topModules[0][1]} time${topModules[0][1] !== 1 ? 's' : ''}.` : 'No sessions completed yet — try starting with a Quick Skill!' },
+                        { icon: '\u{1F50D}', title: 'Untried Content', text: (() => { const untried = publicModules.filter(m => !byModule[m.id]); return untried.length > 0 ? `${untried.length} module${untried.length !== 1 ? 's' : ''} haven't been tried yet. Consider "${untried[0].title}" next.` : 'Amazing! You\'ve tried every module in the library.' })() },
+                        { icon: '\u{1F4CA}', title: 'Session Pattern', text: completed.length > 0 ? `Your students average ${avgSessionTime} minutes per session. ${avgSessionTime < 15 ? 'Quick Skills are a great fit for your schedule.' : 'Your class has the bandwidth for deeper Skill Journeys.'}` : 'Start tracking sessions to see engagement patterns.' },
+                      ].map(insight => (
+                        <div key={insight.title} style={{ padding: '18px 20px', background: C.white, borderRadius: 16, border: `1px solid ${C.sand}` }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <span style={{ fontSize: '1rem' }}>{insight.icon}</span>
+                            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: C.ink }}>{insight.title}</span>
+                          </div>
+                          <p style={{ fontSize: '0.84rem', color: '#777', lineHeight: 1.6 }}>{insight.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
         )}
 
         {activeTab === 'resources' && (
@@ -1564,7 +1741,7 @@ const TeacherProfilePage = ({ teacher, setPage, onLogout, onUpdate }: {
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = C.olive}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = `${C.olive}18`}>
             <div style={{ fontSize: '1.3rem', marginBottom: 8 }}>{'\u{1F4CA}'}</div>
-            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: C.ink, marginBottom: 4 }}>Teacher Dashboard</div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: C.ink, marginBottom: 4 }}>Educator Dashboard</div>
             <div style={{ fontSize: '0.82rem', color: '#999' }}>View engagement data & resources</div>
           </button>
           <button onClick={() => setPage('home')} style={{
@@ -1626,7 +1803,7 @@ const AdminLibraryPage = ({ setPage, setCurrentModule }: { setPage: (p: string) 
 
 // Admin Dashboard
 const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void }) => {
-  const [activeTab, setActiveTab] = useState('modules')
+  const [activeTab, setActiveTab] = useState('analytics')
   const [filterRole, setFilterRole] = useState('all')
   const [, forceUpdate] = useState(0)
   const [dbFeedback, setDbFeedback] = useState<Feedback[]>([])
@@ -1699,9 +1876,176 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content' }}>
-          <Tab id="modules" label="Modules" /><Tab id="feedback" label="Feedback" /><Tab id="team" label="Team Interest" />
+        <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content', flexWrap: 'wrap' }}>
+          <Tab id="analytics" label="Analytics" /><Tab id="modules" label="Modules" /><Tab id="feedback" label="Feedback" /><Tab id="team" label="Team Interest" />
         </div>
+
+        {activeTab === 'analytics' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: '1.5rem', color: C.ink, marginBottom: 6 }}>Platform Analytics</h2>
+              <p style={{ color: '#999', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: 600 }}>Across-the-board metrics on content health, user engagement, and growth.</p>
+            </div>
+
+            {/* Key metrics */}
+            {(() => {
+              const published = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m))
+              const premium = published.filter(m => m.isPremium)
+              const totalSessions = _progress.filter(p => p.completed).length
+              const totalMinutes = _progress.filter(p => p.completed).reduce((s, p) => s + (p.timeWatchedEstimate || 0), 0)
+              const uniqueModulesUsed = new Set(_progress.filter(p => p.completed).map(p => p.moduleId)).size
+              const adoptionRate = published.length > 0 ? Math.round((uniqueModulesUsed / published.length) * 100) : 0
+              const avgDuration = published.length > 0 ? Math.round(published.reduce((s, m) => s + m.durationMinutes, 0) / published.length) : 0
+              const allTags = published.flatMap(m => m.caselTags)
+              const tagCounts: Record<string, number> = {}; allTags.forEach(t => tagCounts[t] = (tagCounts[t] || 0) + 1)
+              const fbPositive = allFeedback.filter(f => f.emotionalState === 'positive' || f.emotionalState === 'happy' || f.emotionalState === 'calm').length
+              const fbNeutral = allFeedback.filter(f => !f.emotionalState || f.emotionalState === 'neutral').length
+              const fbNegative = allFeedback.filter(f => f.emotionalState === 'stressed' || f.emotionalState === 'anxious' || f.emotionalState === 'frustrated').length
+
+              return (
+                <>
+                  {/* Top-line KPIs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))', gap: 14, marginBottom: 32 }}>
+                    {[
+                      { label: 'Total Sessions', value: totalSessions, color: C.olive, icon: '\u2705' },
+                      { label: 'Minutes Delivered', value: totalMinutes, color: C.terra, icon: '\u23F1' },
+                      { label: 'Adoption Rate', value: `${adoptionRate}%`, color: C.teal, icon: '\u{1F4C8}' },
+                      { label: 'Avg Module Length', value: `${avgDuration}m`, color: C.saffron, icon: '\u{1F550}' },
+                      { label: 'Feedback Received', value: allFeedback.length, color: C.olive, icon: '\u{1F4AC}' },
+                      { label: 'Team Inquiries', value: allTeam.length, color: C.teal, icon: '\u{1F465}' },
+                    ].map(s => (
+                      <div key={s.label} style={{ background: C.white, borderRadius: 16, padding: '20px 18px', border: `1px solid ${C.sand}`, textAlign: 'center' }}>
+                        <div style={{ fontSize: '1rem', marginBottom: 6 }}>{s.icon}</div>
+                        <div style={{ fontSize: '1.6rem', fontFamily: "'Playfair Display',serif", fontWeight: 900, color: s.color }}>{s.value}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 500, marginTop: 2 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
+                    {/* Content health */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Content Health</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Breakdown of your content library</p>
+                      {[
+                        { label: 'Published (Free)', value: published.length - premium.length, total: _modules.length, color: C.olive },
+                        { label: 'Published (Garden)', value: premium.length, total: _modules.length, color: C.saffron },
+                        { label: 'Draft / Unpublished', value: _modules.filter(m => !m.isPublished && !isAdminOnlyModule(m)).length, total: _modules.length, color: '#ccc' },
+                        { label: 'Private Admin Clips', value: _modules.filter(isAdminOnlyModule).length, total: _modules.length, color: C.teal },
+                      ].map(row => (
+                        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.sand}` }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: row.color }} />
+                            <span style={{ fontSize: '0.88rem', fontWeight: 500 }}>{row.label}</span>
+                          </div>
+                          <span style={{ fontWeight: 700, color: row.color, fontSize: '0.92rem' }}>{row.value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* CASEL coverage across library */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.teal, marginBottom: 6, fontSize: '1rem' }}>CASEL Tag Distribution</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>How your library covers SEL competencies</p>
+                      {Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(([tag, count]) => {
+                        const maxCount = Math.max(...Object.values(tagCounts))
+                        const pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0
+                        return (
+                          <div key={tag} style={{ marginBottom: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: '0.84rem' }}>
+                              <span style={{ fontWeight: 600 }}>{tag}</span>
+                              <span style={{ fontWeight: 700, color: C.teal }}>{count} module{count !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div style={{ height: 7, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: 7, borderRadius: 99, background: `linear-gradient(135deg,${C.teal},${C.tealL})`, width: `${pct}%`, transition: 'width 0.6s' }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {Object.keys(tagCounts).length === 0 && <p style={{ color: '#bbb' }}>No published modules with CASEL tags yet.</p>}
+                    </div>
+                  </div>
+
+                  <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
+                    {/* Feedback sentiment */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.saffron, marginBottom: 6, fontSize: '1rem' }}>Feedback Sentiment</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Emotional state distribution from feedback</p>
+                      {allFeedback.length > 0 ? (
+                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                          {[
+                            { label: 'Positive', count: fbPositive, color: C.olive, icon: '\u{1F60A}' },
+                            { label: 'Neutral', count: fbNeutral, color: C.saffron, icon: '\u{1F610}' },
+                            { label: 'Stressed', count: fbNegative, color: C.terra, icon: '\u{1F61F}' },
+                          ].map(s => (
+                            <div key={s.label} style={{ flex: '1 1 100px', textAlign: 'center', padding: '18px 14px', background: `${s.color}06`, borderRadius: 16, border: `1px solid ${s.color}12` }}>
+                              <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{s.icon}</div>
+                              <div style={{ fontSize: '1.4rem', fontWeight: 900, color: s.color, fontFamily: "'Playfair Display',serif" }}>{s.count}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 500 }}>{s.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : <p style={{ color: '#bbb' }}>No feedback data collected yet.</p>}
+                    </div>
+
+                    {/* Growth funnel */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Engagement Funnel</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>From content availability to completion</p>
+                      {[
+                        { label: 'Modules Available', value: published.length, width: 100, color: C.olive },
+                        { label: 'Modules Tried', value: uniqueModulesUsed, width: published.length > 0 ? Math.max(10, Math.round((uniqueModulesUsed / published.length) * 100)) : 10, color: C.teal },
+                        { label: 'Total Completions', value: totalSessions, width: published.length > 0 ? Math.max(10, Math.min(100, Math.round((totalSessions / (published.length * 3)) * 100))) : 10, color: C.saffron },
+                        { label: 'Feedback Given', value: allFeedback.length, width: totalSessions > 0 ? Math.max(10, Math.round((allFeedback.length / totalSessions) * 100)) : 10, color: C.terra },
+                      ].map((step, i) => (
+                        <div key={step.label} style={{ marginBottom: 14 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '0.84rem' }}>
+                            <span style={{ fontWeight: 500 }}><span style={{ color: '#ccc', marginRight: 6 }}>{i + 1}.</span>{step.label}</span>
+                            <span style={{ fontWeight: 700, color: step.color }}>{step.value}</span>
+                          </div>
+                          <div style={{ height: 24, background: C.sand, borderRadius: 8, overflow: 'hidden' }}>
+                            <div style={{ height: 24, borderRadius: 8, background: `linear-gradient(135deg,${step.color}dd,${step.color})`, width: `${step.width}%`, transition: 'width 0.8s', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 10 }}>
+                              {step.width > 20 && <span style={{ color: 'white', fontSize: '0.72rem', fontWeight: 700 }}>{step.value}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Team interest breakdown */}
+                  <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                    <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Team Interest Breakdown</h3>
+                    <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Who's reaching out and how they want to be involved</p>
+                    {allTeam.length > 0 ? (() => {
+                      const roleCounts: Record<string, number> = {}
+                      allTeam.forEach(t => t.role.split(',').forEach(r => { if (r.trim()) roleCounts[r.trim()] = (roleCounts[r.trim()] || 0) + 1 }))
+                      const ROLE_META: Record<string, { label: string; color: string; icon: string }> = {
+                        partner: { label: 'Pilot Partners', color: C.olive, icon: '\u{1F3EB}' },
+                        join: { label: 'Team Joiners', color: C.teal, icon: '\u{1F331}' },
+                        backer: { label: 'Early Backers', color: C.saffron, icon: '\u{1F4B0}' },
+                      }
+                      return (
+                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                          {Object.entries(roleCounts).map(([role, count]) => {
+                            const meta = ROLE_META[role] || { label: role, color: '#999', icon: '\u{1F464}' }
+                            return (
+                              <div key={role} style={{ flex: '1 1 150px', padding: '20px', background: `${meta.color}06`, borderRadius: 16, border: `1px solid ${meta.color}15`, textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.3rem', marginBottom: 8 }}>{meta.icon}</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: meta.color, fontFamily: "'Playfair Display',serif" }}>{count}</div>
+                                <div style={{ fontSize: '0.78rem', color: '#999', fontWeight: 500 }}>{meta.label}</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })() : <p style={{ color: '#bbb' }}>No team interest submissions yet.</p>}
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {activeTab === 'modules' && (
           <div>
