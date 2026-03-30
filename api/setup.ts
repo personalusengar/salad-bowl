@@ -34,6 +34,16 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS teachers (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        school TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
     return res.status(200).json({ ok: true, message: 'Tables created successfully' });
   } catch (err) {
     return res.status(500).json({ error: String(err) });

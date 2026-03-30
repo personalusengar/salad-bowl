@@ -23,6 +23,8 @@ interface Feedback { id: string; message: string; emotionalState: string | null;
 interface TeamInterest { id: string; name: string; email: string; role: string; organization: string; contribution: string; excitement: string; skills: string; wantsUpdates: boolean; phone: string; createdAt: Date }
 interface TeamPerson { name: string; title: string; emoji: string; image?: string; subtitles?: string[] }
 interface ChatMsg { role: 'user' | 'assistant'; text: string; modules?: Module[] }
+interface TeacherAuth { id: number; name: string; email: string; school: string }
+interface Resource { id: string; moduleId: string; title: string; description: string; fileUrl: string; fileType: 'pdf' | 'doc' | 'image' | 'other'; timing: 'before' | 'after' | 'both'; uploadedBy: string; createdAt: Date }
 
 // Team Data
 const TEAM_SECTIONS: { label: string; color: string; people: TeamPerson[] }[] = [
@@ -66,11 +68,11 @@ const SEED_JOURNEYS = [
 
 const ADMIN_LIBRARY_MODULES: Module[] = [
   {
-    id:'m9', title:'Reset Breath', description:'A private admin clip for quick nervous system resets using slow, grounded breathing.', videoUrl:'/Clip%20-%20Reset%20Breath.mp4', mediaKind:'file', accessLevel:'admin',
+    id:'m9', title:'Reset Breath', description:'A private admin clip for quick nervous system resets using slow, grounded breathing.', videoUrl:'/Clip---Reset-Breath.mp4', mediaKind:'file', accessLevel:'admin',
     durationMinutes:2, ageLevel:'middle', contentType:'quick_skill', caselTags:['Self-Management','Self-Awareness'], energyLevel:'calm', learningGoals:['Reset breathing patterns','Support fast regulation','Create a calmer transition'], reflectionPrompt:'When would this clip be most useful during the school day?', isPublished:false, isPremium:false,
   },
   {
-    id:'m10', title:'Full Body Scan', description:'A private admin clip guiding a short full-body scan to help students notice tension and settle into the present moment.', videoUrl:'/Clip%202-%20Full%20Body%20Scan.mp4', mediaKind:'file', accessLevel:'admin',
+    id:'m10', title:'Full Body Scan', description:'A private admin clip guiding a short full-body scan to help students notice tension and settle into the present moment.', videoUrl:'/Clip-2--Full-Body-Scan.mp4', mediaKind:'file', accessLevel:'admin',
     durationMinutes:4, ageLevel:'middle', contentType:'quick_skill', caselTags:['Self-Management','Self-Awareness'], energyLevel:'calm', learningGoals:['Notice body sensations','Release stored tension','Build present-moment awareness'], reflectionPrompt:'What changes do you notice in your body after the scan?', isPublished:false, isPremium:false,
   },
 ]
@@ -78,11 +80,27 @@ const ADMIN_LIBRARY_MODULES: Module[] = [
 const isAdminOnlyModule = (mod: Module) => mod.accessLevel === 'admin'
 const isFileModule = (mod: Module) => mod.mediaKind === 'file' || /\.(mp4|webm|ogg)(\?|$)/i.test(mod.videoUrl)
 
+// Seed Resources
+const SEED_RESOURCES: Resource[] = [
+  { id: 'r1', moduleId: 'm1', title: 'Winter Yoga Context Card', description: 'A one-page handout to share with students before the session. Introduces breath awareness and sets intentions.', fileUrl: '#', fileType: 'pdf', timing: 'before', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-01-10') },
+  { id: 'r2', moduleId: 'm1', title: 'Breath Journal Worksheet', description: 'Post-session worksheet where students sketch or write about their breathing experience.', fileUrl: '#', fileType: 'pdf', timing: 'after', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-01-10') },
+  { id: 'r3', moduleId: 'm2', title: 'Grounding Flow Visual Guide', description: 'Illustrated pose sequence card for students to follow along or practice independently.', fileUrl: '#', fileType: 'image', timing: 'both', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-01-15') },
+  { id: 'r4', moduleId: 'm5', title: '5-Minute Reset Cue Card', description: 'A pocket-sized card with the 4-step reset sequence. Print and laminate for student desks.', fileUrl: '#', fileType: 'pdf', timing: 'before', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-01') },
+  { id: 'r5', moduleId: 'm5', title: 'Focus Check-In Sticker Sheet', description: 'Fun sticker-style check-in sheet where students rate their focus before and after the reset.', fileUrl: '#', fileType: 'pdf', timing: 'after', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-01') },
+  { id: 'r6', moduleId: 'm6', title: 'Shake It Out Activity Card', description: 'Group activity instructions with 3 variations for different energy levels.', fileUrl: '#', fileType: 'pdf', timing: 'before', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-05') },
+  { id: 'r7', moduleId: 'm7', title: 'Talking Circle Facilitator Guide', description: 'Step-by-step guide for teachers to set up and facilitate a talking circle in the classroom.', fileUrl: '#', fileType: 'doc', timing: 'before', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-10') },
+  { id: 'r8', moduleId: 'm7', title: 'Listening Reflection Activity', description: 'Post-session activity where students write a letter to someone they want to listen to more deeply.', fileUrl: '#', fileType: 'pdf', timing: 'after', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-10') },
+  { id: 'r9', moduleId: 'm8', title: 'Ubuntu Discussion Prompts', description: 'A set of 8 discussion prompts rooted in Ubuntu philosophy for small group or whole-class use.', fileUrl: '#', fileType: 'pdf', timing: 'both', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-02-12') },
+  { id: 'r10', moduleId: 'm3', title: 'Restorative Pose Reference', description: 'Photo reference sheet showing each restorative pose with modifications for different abilities.', fileUrl: '#', fileType: 'image', timing: 'before', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-01-20') },
+  { id: 'r11', moduleId: 'm4', title: 'Mindful Movement Coloring Page', description: 'A coloring page featuring movement poses — a calming post-session activity for younger students.', fileUrl: '#', fileType: 'pdf', timing: 'after', uploadedBy: 'Salad Bowl', createdAt: new Date('2026-01-25') },
+]
+
 // In-memory store
 let _progress: Progress[] = []
 let _feedback: Feedback[] = []
 let _teamInterest: TeamInterest[] = []
 let _modules: Module[] = [...SEED_MODULES, ...ADMIN_LIBRARY_MODULES]
+let _resources: Resource[] = [...SEED_RESOURCES]
 
 // Scroll reveal hook
 const useReveal = () => {
@@ -198,11 +216,12 @@ const Logo = ({ size = 48 }: { size?: number }) => (
 
 // Nav - simplified: Home, Plans, Ask (conversational AI), Connect, Our Team
 type Role = 'public' | 'teacher' | 'admin'
-const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary }: {
+const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary, teacher, onLogout }: {
   page: string; setPage: (p: string) => void
   role: Role; setRole: (r: Role) => void
   teamRef: React.RefObject<HTMLDivElement>
   openAdminLibrary: () => void
+  teacher: TeacherAuth | null; onLogout: () => void
 }) => {
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -233,13 +252,21 @@ const Nav = ({ page, setPage, role, setRole, teamRef, openAdminLibrary }: {
             <button key={p} className={`nav-link ${page === p ? 'active' : ''}`} onClick={() => setPage(p)}>{label}</button>
           ))}
           <button className="nav-link" onClick={scrollToTeam} style={{ color: C.teal, fontWeight: 600 }}>Our Team</button>
-          {(role === 'teacher' || role === 'admin') && (
+          {teacher ? (
             <button className={`nav-link ${page === 'teacher' ? 'active' : ''}`} onClick={() => setPage('teacher')}>Dashboard</button>
+          ) : (
+            <button className={`nav-link ${page === 'login' ? 'active' : ''}`} onClick={() => setPage('login')} style={{ color: C.terra, fontWeight: 600 }}>Teacher Login</button>
           )}
           {role === 'admin' && (
             <button className={`nav-link ${page === 'admin' ? 'active' : ''}`} onClick={() => setPage('admin')}>Admin</button>
           )}
-          <select className="filter-select" style={{ marginLeft: 12, minWidth: 'auto', padding: '6px 30px 6px 12px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 99 }}
+          {teacher && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12 }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: C.olive, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{teacher.name}</span>
+              <button onClick={onLogout} style={{ padding: '5px 14px', borderRadius: 99, border: `1.5px solid ${C.terra}30`, background: `${C.terra}08`, color: C.terra, fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}>Logout</button>
+            </div>
+          )}
+          <select className="filter-select" style={{ marginLeft: 8, minWidth: 'auto', padding: '6px 30px 6px 12px', fontSize: '0.78rem', fontWeight: 600, borderRadius: 99, opacity: 0.5 }}
             value={role} onChange={e => setRole(e.target.value as Role)}>
             <option value="public">Public</option>
             <option value="teacher">Teacher</option>
@@ -632,6 +659,63 @@ const ModulePage = ({ mod, setPage }: { mod: Module; setPage: (p: string) => voi
           </div>
         ))}
       </div>
+      {/* Materials & Resources */}
+      {(() => {
+        const modResources = _resources.filter(r => r.moduleId === mod.id)
+        const beforeRes = modResources.filter(r => r.timing === 'before' || r.timing === 'both')
+        const afterRes = modResources.filter(r => r.timing === 'after' || r.timing === 'both')
+        const FILE_ICONS: Record<string, string> = { pdf: '\u{1F4C4}', doc: '\u{1F4DD}', image: '\u{1F5BC}', other: '\u{1F4CE}' }
+        const TIMING_LABEL: Record<string, { text: string; color: string }> = { before: { text: 'Before Session', color: C.saffron }, after: { text: 'After Session', color: C.teal }, both: { text: 'Before & After', color: C.olive } }
+        const ResourceItem = ({ r }: { r: Resource }) => (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 18px', background: C.white, borderRadius: 14, border: `1px solid ${C.sand}`, transition: 'box-shadow 0.2s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: `${C.teal}10`, border: `1.5px solid ${C.teal}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{FILE_ICONS[r.fileType]}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: '0.9rem', color: C.ink }}>{r.title}</span>
+                <span style={{ padding: '2px 10px', borderRadius: 99, fontSize: '0.68rem', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', background: `${TIMING_LABEL[r.timing].color}14`, color: TIMING_LABEL[r.timing].color }}>{TIMING_LABEL[r.timing].text}</span>
+              </div>
+              <p style={{ fontSize: '0.82rem', color: '#888', lineHeight: 1.5, marginBottom: 8 }}>{r.description}</p>
+              <button onClick={() => { /* In production, this would trigger a real download */ alert('Download will be available when file is uploaded. This is a sample resource.') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 99, border: `1.5px solid ${C.olive}30`, background: `${C.olive}06`, color: C.olive, fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.olive; (e.currentTarget as HTMLElement).style.color = 'white' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = `${C.olive}06`; (e.currentTarget as HTMLElement).style.color = C.olive }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </button>
+            </div>
+          </div>
+        )
+        if (modResources.length === 0) return null
+        return (
+          <div style={{ background: `linear-gradient(135deg,${C.saffron}08,${C.terra}06)`, borderRadius: 20, padding: 32, marginBottom: 28, border: `1px solid ${C.saffron}15` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: `${C.saffron}14`, border: `1.5px solid ${C.saffron}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>{'\u{1F4DA}'}</div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', color: C.saffron, fontWeight: 700, lineHeight: 1.2 }}>Materials & Resources</h3>
+                <p style={{ fontSize: '0.78rem', color: '#999', marginTop: 2 }}>Downloadable materials to prepare for and extend this session</p>
+              </div>
+            </div>
+            {beforeRes.length > 0 && (
+              <div style={{ marginBottom: afterRes.length > 0 ? 20 : 0 }}>
+                <p style={{ fontSize: '0.78rem', fontWeight: 700, color: C.saffron, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>Prepare Before Class</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {beforeRes.map(r => <ResourceItem key={r.id} r={r} />)}
+                </div>
+              </div>
+            )}
+            {afterRes.length > 0 && (
+              <div>
+                <p style={{ fontSize: '0.78rem', fontWeight: 700, color: C.teal, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 10 }}>Follow-Up Activities</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {afterRes.map(r => <ResourceItem key={r.id} r={r} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       <div className="glass-card" style={{ borderRadius: 20, padding: 32, marginBottom: 28 }}>
         <h3 style={{ fontSize: '1.1rem', color: C.teal, marginBottom: 10 }}>Reflection</h3>
         <p style={{ color: '#777', marginBottom: 18, fontSize: '0.95rem', fontStyle: 'italic', lineHeight: 1.6 }}>{mod.reflectionPrompt}</p>
@@ -986,8 +1070,107 @@ const BuildWithUsPage = () => {
   )
 }
 
+// Login / Register Page
+const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [form, setForm] = useState({ name: '', email: '', password: '', school: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (!form.email || !form.password) { setError('Email and password are required.'); return }
+    if (mode === 'register' && !form.name) { setError('Name is required.'); return }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: mode, ...form }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Something went wrong.'); setLoading(false); return }
+      onLogin(data.teacher as TeacherAuth)
+    } catch {
+      setError('Could not connect. Please try again.')
+    }
+    setLoading(false)
+  }
+
+  return (
+    <div className="fade-up" style={{ minHeight: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', background: `linear-gradient(180deg,${C.cream},${C.bg})` }}>
+      <div style={{ width: '100%', maxWidth: 440 }}>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <Logo size={64} />
+          <h1 style={{ fontSize: '1.8rem', color: C.ink, marginTop: 16, marginBottom: 6 }}>
+            {mode === 'login' ? 'Teacher Login' : 'Create Account'}
+          </h1>
+          <p style={{ color: '#999', fontSize: '0.95rem', lineHeight: 1.6 }}>
+            {mode === 'login' ? 'Sign in to access your teacher dashboard.' : 'Register to get started with Salad Bowl.'}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{
+          background: C.white, borderRadius: 24, padding: '36px 36px 32px',
+          border: `1px solid ${C.sand}`, boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+        }}>
+          {mode === 'register' && (
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Name *</label>
+              <input className="input-field" placeholder="Your full name" value={form.name} onChange={e => set('name', e.target.value)} />
+            </div>
+          )}
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Email *</label>
+            <input className="input-field" type="email" placeholder="you@school.edu" value={form.email} onChange={e => set('email', e.target.value)} autoComplete="email" />
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>Password *</label>
+            <input className="input-field" type="password" placeholder={mode === 'register' ? 'Choose a password' : 'Your password'} value={form.password} onChange={e => set('password', e.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+          </div>
+          {mode === 'register' && (
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ fontWeight: 700, fontSize: '0.86rem', display: 'block', marginBottom: 8 }}>School <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label>
+              <input className="input-field" placeholder="School or organization" value={form.school} onChange={e => set('school', e.target.value)} />
+            </div>
+          )}
+
+          {error && (
+            <div style={{ background: '#fef0f0', border: '1px solid #fcc', borderRadius: 12, padding: '10px 16px', marginBottom: 18, color: '#c44', fontSize: '0.88rem', fontWeight: 500 }}>
+              {error}
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} style={{
+            width: '100%', padding: '15px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '1rem',
+            background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', cursor: 'pointer',
+            boxShadow: `0 4px 16px ${C.olive}22`, transition: 'all 0.3s',
+            opacity: loading ? 0.6 : 1,
+          }}>
+            {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+          </button>
+
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontSize: '0.88rem', color: '#999' }}>
+              {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+              <button type="button" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}
+                style={{ background: 'none', border: 'none', color: C.terra, fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', textDecoration: 'underline' }}>
+                {mode === 'login' ? 'Register here' : 'Sign in instead'}
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // Teacher Dashboard
 const TeacherDashboard = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'resources'>('overview')
+  const [, forceUpdate] = useState(0)
   const completed = _progress.filter(p => p.completed)
   const totalTime = completed.reduce((s, p) => s + (p.timeWatchedEstimate || 0), 0)
   const byModule: Record<string, number> = {}
@@ -996,6 +1179,41 @@ const TeacherDashboard = () => {
   const byType: Record<string, number> = {}
   completed.forEach(p => { const m = _modules.find(x => x.id === p.moduleId); if (m) byType[m.contentType] = (byType[m.contentType] || 0) + 1 })
 
+  // Resources state
+  const [resModFilter, setResModFilter] = useState('all')
+  const [resTimingFilter, setResTimingFilter] = useState('all')
+  const [showUpload, setShowUpload] = useState(false)
+  const [uploadForm, setUploadForm] = useState({ title: '', description: '', moduleId: '', timing: 'before' as 'before' | 'after' | 'both', fileType: 'pdf' as 'pdf' | 'doc' | 'image' | 'other' })
+  const setU = (k: string, v: string) => setUploadForm(p => ({ ...p, [k]: v }))
+
+  const filteredResources = _resources.filter(r => {
+    if (resModFilter !== 'all' && r.moduleId !== resModFilter) return false
+    if (resTimingFilter !== 'all' && r.timing !== resTimingFilter && !(resTimingFilter !== 'both' && r.timing === 'both')) return false
+    return true
+  })
+
+  const handleUpload = () => {
+    if (!uploadForm.title || !uploadForm.moduleId) return
+    _resources.push({
+      id: 'r' + Date.now(), moduleId: uploadForm.moduleId, title: uploadForm.title,
+      description: uploadForm.description, fileUrl: '#', fileType: uploadForm.fileType,
+      timing: uploadForm.timing, uploadedBy: 'Teacher', createdAt: new Date(),
+    })
+    setUploadForm({ title: '', description: '', moduleId: '', timing: 'before', fileType: 'pdf' })
+    setShowUpload(false)
+    forceUpdate(n => n + 1)
+  }
+
+  const deleteResource = (id: string) => {
+    const idx = _resources.findIndex(r => r.id === id)
+    if (idx > -1) { _resources.splice(idx, 1); forceUpdate(n => n + 1) }
+  }
+
+  const FILE_ICONS: Record<string, string> = { pdf: '\u{1F4C4}', doc: '\u{1F4DD}', image: '\u{1F5BC}', other: '\u{1F4CE}' }
+  const TIMING_LABEL: Record<string, { text: string; color: string }> = { before: { text: 'Before Session', color: C.saffron }, after: { text: 'After Session', color: C.teal }, both: { text: 'Before & After', color: C.olive } }
+
+  const publicModules = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m))
+
   const Stat = ({ label, value, color, icon }: { label: string; value: number; color: string; icon: string }) => (
     <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}`, textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.03)' }}>
       <div style={{ fontSize: '1.2rem', marginBottom: 8 }}>{icon}</div>
@@ -1003,45 +1221,209 @@ const TeacherDashboard = () => {
       <div style={{ fontSize: '0.85rem', color: '#999', fontWeight: 500 }}>{label}</div>
     </div>
   )
+
+  const DashTab = ({ id, label }: { id: 'overview' | 'resources'; label: string }) => (
+    <button onClick={() => setActiveTab(id)} style={{
+      padding: '10px 24px', borderRadius: '99px', border: 'none',
+      background: activeTab === id ? C.olive : 'transparent',
+      color: activeTab === id ? 'white' : C.ink,
+      fontWeight: 600, fontSize: '0.88rem', transition: 'all 0.25s', cursor: 'pointer',
+    }}>{label}</button>
+  )
+
   return (
     <div className="fade-up">
       <div className="page-header" style={{ background: `linear-gradient(155deg,${C.olive},${C.teal}ee)` }}>
         <h1>Teacher Dashboard</h1>
-        <p>Aggregate engagement and completion data for your classroom.</p>
+        <p>Manage your classroom resources, engagement data, and session materials.</p>
       </div>
       <div className="container section">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, marginBottom: 44 }}>
-          <Stat label="Sessions Completed" value={completed.length} color={C.olive} icon={'\u2705'} />
-          <Stat label="Est. Minutes of Practice" value={totalTime} color={C.terra} icon={'\u23F1'} />
-          <Stat label="Modules Engaged" value={Object.keys(byModule).length} color={C.teal} icon={'\u{1F4DA}'} />
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content' }}>
+          <DashTab id="overview" label="Overview" />
+          <DashTab id="resources" label={`Materials & Resources (${_resources.length})`} />
         </div>
-        <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
-          <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
-            <h3 style={{ color: C.olive, marginBottom: 22 }}>Most Completed Modules</h3>
-            {topModules.length ? topModules.map(([id, count]) => {
-              const m = _modules.find(x => x.id === id)
-              return m ? (
-                <div key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.sand}` }}>
-                  <span style={{ fontSize: '0.93rem', fontWeight: 500 }}>{m.title}</span>
-                  <span style={{ background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', borderRadius: '99px', padding: '3px 14px', fontSize: '0.78rem', fontWeight: 700 }}>{count}</span>
+
+        {activeTab === 'overview' && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 20, marginBottom: 44 }}>
+              <Stat label="Sessions Completed" value={completed.length} color={C.olive} icon={'\u2705'} />
+              <Stat label="Est. Minutes of Practice" value={totalTime} color={C.terra} icon={'\u23F1'} />
+              <Stat label="Modules Engaged" value={Object.keys(byModule).length} color={C.teal} icon={'\u{1F4DA}'} />
+              <Stat label="Resources Available" value={_resources.length} color={C.saffron} icon={'\u{1F4CE}'} />
+            </div>
+            <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28 }}>
+              <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                <h3 style={{ color: C.olive, marginBottom: 22 }}>Most Completed Modules</h3>
+                {topModules.length ? topModules.map(([id, count]) => {
+                  const m = _modules.find(x => x.id === id)
+                  return m ? (
+                    <div key={id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.sand}` }}>
+                      <span style={{ fontSize: '0.93rem', fontWeight: 500 }}>{m.title}</span>
+                      <span style={{ background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', borderRadius: '99px', padding: '3px 14px', fontSize: '0.78rem', fontWeight: 700 }}>{count}</span>
+                    </div>
+                  ) : null
+                }) : <p style={{ color: '#bbb' }}>No completions yet. Mark some modules complete to see data.</p>}
+              </div>
+              <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                <h3 style={{ color: C.olive, marginBottom: 22 }}>Engagement by Type</h3>
+                {Object.entries(byType).length ? Object.entries(byType).map(([type, count]) => (
+                  <div key={type} style={{ marginBottom: 18 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.88rem' }}>
+                      <span style={{ fontWeight: 500 }}>{TYPE_LABEL[type] || type}</span><span style={{ fontWeight: 700, color: C.olive }}>{count}</span>
+                    </div>
+                    <div style={{ height: 8, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ height: 8, borderRadius: 99, background: TYPE_GRADIENT[type] || C.olive, width: `${Math.min(100, count * 20)}%`, transition: 'width 0.8s' }} />
+                    </div>
+                  </div>
+                )) : <p style={{ color: '#bbb' }}>Mark some modules complete to see data.</p>}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'resources' && (
+          <div>
+            {/* Header + actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', color: C.ink, marginBottom: 6 }}>Materials & Resources</h2>
+                <p style={{ color: '#999', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: 520 }}>Download pre-session context setters and post-session activities to make learning stick. Upload your own materials to share.</p>
+              </div>
+              <button className="btn-primary" style={{ fontSize: '0.88rem', padding: '10px 24px' }} onClick={() => setShowUpload(!showUpload)}>
+                {showUpload ? 'Cancel' : '+ Upload Resource'}
+              </button>
+            </div>
+
+            {/* Upload form */}
+            {showUpload && (
+              <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1.5px solid ${C.olive}25`, marginBottom: 28, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ fontSize: '1rem', color: C.olive, marginBottom: 20 }}>Upload New Resource</h3>
+                <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 6 }}>Title *</label>
+                    <input className="input-field" placeholder="e.g. Breathing Exercise Handout" value={uploadForm.title} onChange={e => setU('title', e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 6 }}>Linked Module *</label>
+                    <select className="select-field" value={uploadForm.moduleId} onChange={e => setU('moduleId', e.target.value)}>
+                      <option value="">Select a module...</option>
+                      {publicModules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
+                    </select>
+                  </div>
                 </div>
-              ) : null
-            }) : <p style={{ color: '#bbb' }}>No completions yet. Mark some modules complete to see data.</p>}
-          </div>
-          <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
-            <h3 style={{ color: C.olive, marginBottom: 22 }}>Engagement by Type</h3>
-            {Object.entries(byType).length ? Object.entries(byType).map(([type, count]) => (
-              <div key={type} style={{ marginBottom: 18 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.88rem' }}>
-                  <span style={{ fontWeight: 500 }}>{TYPE_LABEL[type] || type}</span><span style={{ fontWeight: 700, color: C.olive }}>{count}</span>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 6 }}>Description</label>
+                  <textarea className="input-field" rows={2} placeholder="Brief description of this resource..." value={uploadForm.description} onChange={e => setU('description', e.target.value)} style={{ resize: 'vertical' }} />
                 </div>
-                <div style={{ height: 8, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
-                  <div style={{ height: 8, borderRadius: 99, background: TYPE_GRADIENT[type] || C.olive, width: `${Math.min(100, count * 20)}%`, transition: 'width 0.8s' }} />
+                <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 6 }}>Timing</label>
+                    <select className="select-field" value={uploadForm.timing} onChange={e => setU('timing', e.target.value)}>
+                      <option value="before">Before Session</option>
+                      <option value="after">After Session</option>
+                      <option value="both">Before & After</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: '0.82rem', display: 'block', marginBottom: 6 }}>File Type</label>
+                    <select className="select-field" value={uploadForm.fileType} onChange={e => setU('fileType', e.target.value)}>
+                      <option value="pdf">PDF</option>
+                      <option value="doc">Document</option>
+                      <option value="image">Image</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ flex: 1, border: `2px dashed ${C.sand}`, borderRadius: 14, padding: '20px 24px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = C.olive}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = C.sand}
+                    onClick={() => alert('File upload would open a file picker here. This is a sample implementation.')}>
+                    <p style={{ fontSize: '0.88rem', color: '#999' }}><span style={{ fontSize: '1.3rem' }}>{'\u{1F4C1}'}</span><br/>Click to select file</p>
+                  </div>
+                  <button onClick={handleUpload} disabled={!uploadForm.title || !uploadForm.moduleId} style={{
+                    padding: '12px 28px', borderRadius: 60, border: 'none', fontWeight: 700, fontSize: '0.9rem',
+                    background: `linear-gradient(135deg,${C.olive},${C.oliveL})`, color: 'white', cursor: 'pointer',
+                    opacity: (!uploadForm.title || !uploadForm.moduleId) ? 0.5 : 1, transition: 'all 0.3s',
+                  }}>Add Resource</button>
                 </div>
               </div>
-            )) : <p style={{ color: '#bbb' }}>Mark some modules complete to see data.</p>}
+            )}
+
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+              <select className="filter-select" value={resModFilter} onChange={e => setResModFilter(e.target.value)}>
+                <option value="all">All Modules</option>
+                {publicModules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
+              </select>
+              <select className="filter-select" value={resTimingFilter} onChange={e => setResTimingFilter(e.target.value)}>
+                <option value="all">All Timing</option>
+                <option value="before">Before Session</option>
+                <option value="after">After Session</option>
+                <option value="both">Before & After</option>
+              </select>
+              {(resModFilter !== 'all' || resTimingFilter !== 'all') && (
+                <button onClick={() => { setResModFilter('all'); setResTimingFilter('all') }}
+                  style={{ padding: '8px 16px', borderRadius: 10, border: 'none', background: `${C.terra}14`, color: C.terra, fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer' }}>
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            {/* Resource list grouped by module */}
+            {filteredResources.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#bbb' }}>
+                <p style={{ fontSize: '2rem', marginBottom: 12 }}>{'\u{1F4DA}'}</p>
+                <p style={{ fontSize: '1rem' }}>No resources match these filters.</p>
+              </div>
+            ) : (() => {
+              const grouped: Record<string, Resource[]> = {}
+              filteredResources.forEach(r => { if (!grouped[r.moduleId]) grouped[r.moduleId] = []; grouped[r.moduleId].push(r) })
+              return Object.entries(grouped).map(([modId, resources]) => {
+                const mod = _modules.find(m => m.id === modId)
+                return (
+                  <div key={modId} style={{ marginBottom: 28 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                      <div style={{ width: 4, height: 22, borderRadius: 4, background: TYPE_GRADIENT[mod?.contentType || 'quick_skill'] }} />
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: C.ink }}>{mod?.title || 'Unknown Module'}</h3>
+                      <span style={{ fontSize: '0.75rem', color: '#bbb', fontWeight: 500 }}>{resources.length} resource{resources.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {resources.map(r => (
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 20px', background: C.white, borderRadius: 16, border: `1px solid ${C.sand}`, transition: 'box-shadow 0.2s' }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}>
+                          <div style={{ width: 42, height: 42, borderRadius: 12, background: `${TIMING_LABEL[r.timing].color}10`, border: `1.5px solid ${TIMING_LABEL[r.timing].color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>{FILE_ICONS[r.fileType]}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.92rem', color: C.ink }}>{r.title}</span>
+                              <span style={{ padding: '2px 10px', borderRadius: 99, fontSize: '0.68rem', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', background: `${TIMING_LABEL[r.timing].color}14`, color: TIMING_LABEL[r.timing].color }}>{TIMING_LABEL[r.timing].text}</span>
+                              <span style={{ padding: '2px 10px', borderRadius: 99, fontSize: '0.68rem', fontWeight: 600, background: `${C.sand}`, color: '#999' }}>{r.fileType.toUpperCase()}</span>
+                            </div>
+                            {r.description && <p style={{ fontSize: '0.84rem', color: '#888', lineHeight: 1.5, marginBottom: 8 }}>{r.description}</p>}
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button onClick={() => alert('Download will be available when file is uploaded. This is a sample resource.')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 99, border: `1.5px solid ${C.olive}30`, background: `${C.olive}06`, color: C.olive, fontWeight: 600, fontSize: '0.78rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.olive; (e.currentTarget as HTMLElement).style.color = 'white' }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = `${C.olive}06`; (e.currentTarget as HTMLElement).style.color = C.olive }}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download
+                              </button>
+                              {r.uploadedBy === 'Teacher' && (
+                                <button onClick={() => deleteResource(r.id)} style={{ padding: '5px 14px', borderRadius: 99, border: 'none', background: '#fef0f0', color: '#c44', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>Remove</button>
+                              )}
+                              <span style={{ fontSize: '0.72rem', color: '#ccc', marginLeft: 'auto' }}>by {r.uploadedBy}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -1295,11 +1677,33 @@ const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: R
 
 // App
 export default function App() {
-  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library'].includes(h) ? h : 'home' }
+  const getPageFromHash = () => { const h = window.location.hash.replace('#', ''); return ['home','ask','plans','connect','teacher','admin','admin-library','login','module'].includes(h) ? h : 'home' }
   const [page, setPage] = useState(getPageFromHash)
   const [role, setRole] = useState<Role>('public')
   const [currentModule, setCurrentModule] = useState<Module | null>(null)
   const teamRef = useRef<HTMLDivElement>(null)
+
+  // Teacher auth state — persist in localStorage
+  const [teacher, setTeacher] = useState<TeacherAuth | null>(() => {
+    try { const s = localStorage.getItem('sb_teacher'); return s ? JSON.parse(s) : null } catch { return null }
+  })
+
+  const handleLogin = (t: TeacherAuth) => {
+    setTeacher(t)
+    localStorage.setItem('sb_teacher', JSON.stringify(t))
+    setRole('teacher')
+    navigateTo('teacher')
+  }
+
+  const handleLogout = () => {
+    setTeacher(null)
+    localStorage.removeItem('sb_teacher')
+    setRole('public')
+    navigateTo('home')
+  }
+
+  // If a teacher is stored, default role to teacher
+  useEffect(() => { if (teacher) setRole('teacher') }, [])
 
   useEffect(() => {
     const onHash = () => { const p = getPageFromHash(); setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }
@@ -1325,22 +1729,18 @@ export default function App() {
     <>
       <style>{globalStyles}</style>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Nav page={page} setPage={navigateTo} role={role} setRole={setRole} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} />
+        <Nav page={page} setPage={navigateTo} role={role} setRole={setRole} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} teacher={teacher} onLogout={handleLogout} />
         <main style={{ flex: 1 }}>
           {page === 'home' && <HomePage setPage={navigateTo} setCurrentModule={setCurrentModule} teamRef={teamRef} />}
           {page === 'module' && currentModule && <ModulePage mod={currentModule} setPage={navigateTo} />}
           {page === 'plans' && <PlansPage setPage={navigateTo} />}
           {page === 'ask' && <AskPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'connect' && <BuildWithUsPage />}
-          {page === 'teacher' && (role === 'teacher' || role === 'admin') && <TeacherDashboard />}
+          {page === 'login' && <LoginPage onLogin={handleLogin} />}
+          {page === 'teacher' && teacher && <TeacherDashboard />}
+          {page === 'teacher' && !teacher && <LoginPage onLogin={handleLogin} />}
           {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} />}
           {page === 'admin-library' && role === 'admin' && <AdminLibraryPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
-          {page === 'teacher' && role === 'public' && (
-            <div style={{ textAlign: 'center', padding: '100px 24px', color: '#bbb' }}>
-              <h2 style={{ fontWeight: 700 }}>Teacher access required</h2>
-              <p style={{ marginTop: 8, color: '#999' }}>Switch to Teacher or Admin role to view this page.</p>
-            </div>
-          )}
           {page === 'admin-library' && role !== 'admin' && (
             <div style={{ textAlign: 'center', padding: '100px 24px', color: '#bbb' }}>
               <h2 style={{ fontWeight: 700 }}>Admin access required</h2>
