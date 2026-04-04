@@ -13,7 +13,7 @@ const C = {
 // Types
 interface Module {
   id: string; title: string; description: string; videoUrl: string
-  mediaKind?: 'embed' | 'file'; accessLevel?: 'public' | 'admin'
+  mediaKind?: 'embed' | 'file'; accessLevel?: 'public' | 'educator' | 'admin'
   durationMinutes: number; ageLevel: string; contentType: string
   caselTags: string[]; energyLevel: string; learningGoals: string[]
   reflectionPrompt: string; isPublished: boolean; isPremium: boolean
@@ -66,6 +66,33 @@ const SEED_JOURNEYS = [
   { id:'j1', title:'Winter Wellbeing Pilot', description:'A 4-session yoga journey to cultivate calm, self-awareness, and grounded presence through the winter months.', orderedModuleIds:['m1','m2','m3','m4'] },
 ]
 
+const EDUCATOR_LIBRARY_MODULES: Module[] = [
+  {
+    id:'me1', title:'Getting to Know Your Body', description:'An introductory session exploring body awareness, posture, and gentle movement to help students connect with how their body feels and moves.',
+    videoUrl:'https://www.youtube.com/embed/jtxE8ahsV9M', mediaKind:'embed', accessLevel:'educator',
+    durationMinutes:15, ageLevel:'middle', contentType:'skill_journey', caselTags:['Self-Awareness','Self-Management'], energyLevel:'calm',
+    learningGoals:['Develop body awareness','Explore posture and alignment','Build comfort with gentle movement'], reflectionPrompt:'What did you notice about your body during this session?', isPublished:true, isPremium:false,
+  },
+  {
+    id:'me2', title:'Strength and Stability', description:'Build core strength and balance through guided movement, helping students feel grounded and confident in their body.',
+    videoUrl:'https://www.youtube.com/embed/EtpO4psgjbg', mediaKind:'embed', accessLevel:'educator',
+    durationMinutes:15, ageLevel:'middle', contentType:'skill_journey', caselTags:['Self-Management','Responsible Decision-Making'], energyLevel:'active',
+    learningGoals:['Build physical strength','Develop balance and stability','Foster confidence through movement'], reflectionPrompt:'Where did you feel the most strong and stable during this practice?', isPublished:true, isPremium:false,
+  },
+  {
+    id:'me3', title:'Flexibility, Flow and Emotional Regulation', description:'A flowing movement session that connects breath to motion, helping students practice emotional regulation through mindful flexibility.',
+    videoUrl:'https://www.youtube.com/embed/n3BB3j0p83o', mediaKind:'embed', accessLevel:'educator',
+    durationMinutes:15, ageLevel:'middle', contentType:'skill_journey', caselTags:['Self-Management','Self-Awareness','Social Awareness'], energyLevel:'focused',
+    learningGoals:['Improve flexibility through breath','Practice emotional regulation','Connect movement with emotional states'], reflectionPrompt:'How did your emotions shift as you moved through the flow?', isPublished:true, isPremium:false,
+  },
+  {
+    id:'me4', title:'Creativity and Relaxation', description:'A creative cool-down session blending gentle movement, visualization, and relaxation techniques to help students unwind and express themselves.',
+    videoUrl:'https://www.youtube.com/embed/B2us3qj7R5U', mediaKind:'embed', accessLevel:'educator',
+    durationMinutes:15, ageLevel:'middle', contentType:'skill_journey', caselTags:['Self-Awareness','Relationship Skills'], energyLevel:'calm',
+    learningGoals:['Explore creative expression through movement','Practice deep relaxation','Develop visualization skills'], reflectionPrompt:'What images or feelings came up during the relaxation?', isPublished:true, isPremium:false,
+  },
+]
+
 const ADMIN_LIBRARY_MODULES: Module[] = [
   {
     id:'m9', title:'Reset Breath', description:'A private admin clip for quick nervous system resets using slow, grounded breathing.', videoUrl:'/Clip---Reset-Breath.mp4', mediaKind:'file', accessLevel:'admin',
@@ -99,7 +126,7 @@ const SEED_RESOURCES: Resource[] = [
 let _progress: Progress[] = []
 let _feedback: Feedback[] = []
 let _teamInterest: TeamInterest[] = []
-let _modules: Module[] = [...SEED_MODULES, ...ADMIN_LIBRARY_MODULES]
+let _modules: Module[] = [...SEED_MODULES, ...EDUCATOR_LIBRARY_MODULES, ...ADMIN_LIBRARY_MODULES]
 let _resources: Resource[] = [...SEED_RESOURCES]
 
 // Scroll reveal hook
@@ -521,12 +548,14 @@ const LibraryCollection = ({
 }
 
 // Home Page (IS the library - no separate library page)
-const HomePage = ({ setPage, setCurrentModule, teamRef }: {
+const HomePage = ({ setPage, setCurrentModule, teamRef, role }: {
   setPage: (p: string) => void
   setCurrentModule: (m: Module) => void
   teamRef: React.RefObject<HTMLDivElement>
+  role: Role
 }) => {
-  const publicModules = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m))
+  const publicModules = _modules.filter(m => m.isPublished && !isAdminOnlyModule(m) && m.accessLevel !== 'educator')
+  const educatorModules = _modules.filter(m => m.isPublished && m.accessLevel === 'educator')
   const completedIds = _progress.filter(p => p.completed).map(p => p.moduleId)
 
   return (
@@ -578,6 +607,27 @@ const HomePage = ({ setPage, setCurrentModule, teamRef }: {
           completedIds={completedIds}
           emptyMessage="No modules match these filters."
         />
+
+        {/* Educator-only video library — hidden from public */}
+        {(role === 'teacher' || role === 'admin') && educatorModules.length > 0 && (
+          <div style={{ marginTop: 56 }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: `${C.saffron}14`, border: `1.5px solid ${C.saffron}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>{"\u{1F3AC}"}</div>
+                <h2 style={{ fontSize: '1.35rem', fontFamily: "'Playfair Display',serif", fontWeight: 800, color: C.ink }}>Educator Video Library</h2>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: C.saffron, background: `${C.saffron}12`, padding: '3px 12px', borderRadius: 99 }}>Educator Access</span>
+              </div>
+              <p style={{ fontSize: '0.88rem', color: '#999', lineHeight: 1.6, maxWidth: 560 }}>Exclusive session recordings for educators. Use these in your classroom or for your own professional practice.</p>
+            </div>
+            <div className="library-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
+              {educatorModules.map((m, i) => (
+                <div key={m.id} style={{ animation: `fadeUp 0.5s ${i * 0.1}s cubic-bezier(.22,1,.36,1) both` }}>
+                  <ModuleCard mod={m} onClick={mod => { setCurrentModule(mod); setPage('module') }} completed={completedIds.includes(m.id)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div style={{ paddingBottom: 60 }} />
       </div>
 
@@ -2244,7 +2294,7 @@ export default function App() {
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Nav page={page} setPage={navigateTo} role={role} teamRef={teamRef} openAdminLibrary={() => navigateTo('admin-library')} teacher={teacher} onLogout={handleLogout} />
         <main style={{ flex: 1 }}>
-          {page === 'home' && <HomePage setPage={navigateTo} setCurrentModule={setCurrentModule} teamRef={teamRef} />}
+          {page === 'home' && <HomePage setPage={navigateTo} setCurrentModule={setCurrentModule} teamRef={teamRef} role={role} />}
           {page === 'module' && currentModule && <ModulePage mod={currentModule} setPage={navigateTo} />}
           {page === 'plans' && <PlansPage setPage={navigateTo} />}
           {page === 'ask' && <AskPage setPage={navigateTo} setCurrentModule={setCurrentModule} />}
