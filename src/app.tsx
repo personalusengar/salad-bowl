@@ -746,9 +746,9 @@ const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
             </Q>
             <Q label="Have your students done yoga or mindfulness before?">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="never" current={yogaBefore} setter={setYogaBefore} label="Never" icon="\u{1F331}" />
-                <Opt value="a_few_times" current={yogaBefore} setter={setYogaBefore} label="A few times" icon="\u{1F33F}" />
-                <Opt value="regularly" current={yogaBefore} setter={setYogaBefore} label="Regularly" icon="\u{1F333}" />
+                <Opt value="never" current={yogaBefore} setter={setYogaBefore} label="Never" icon={'\u{1F331}'} />
+                <Opt value="a_few_times" current={yogaBefore} setter={setYogaBefore} label="A few times" icon={'\u{1F33F}'} />
+                <Opt value="regularly" current={yogaBefore} setter={setYogaBefore} label="Regularly" icon={'\u{1F333}'} />
               </div>
             </Q>
           </>
@@ -756,27 +756,27 @@ const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
 
         <Q label={isPre ? 'How aware are students of their bodies right now?' : 'How aware are students of their bodies after the session?'} sub="Based on what you observe in the classroom">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="not_yet" current={bodyAwareness} setter={setBodyAwareness} label="Not yet" icon="\u{1F636}" />
-            <Opt value="a_little" current={bodyAwareness} setter={setBodyAwareness} label="A little" icon="\u{1F914}" />
-            <Opt value="yes" current={bodyAwareness} setter={setBodyAwareness} label="Yes, noticeably" icon="\u{1F60C}" />
+            <Opt value="not_yet" current={bodyAwareness} setter={setBodyAwareness} label="Not yet" icon={'\u{1F636}'} />
+            <Opt value="a_little" current={bodyAwareness} setter={setBodyAwareness} label="A little" icon={'\u{1F914}'} />
+            <Opt value="yes" current={bodyAwareness} setter={setBodyAwareness} label="Yes, noticeably" icon={'\u{1F60C}'} />
           </div>
         </Q>
 
         <Q label={isPre ? 'How aware are students of their breathing right now?' : 'How aware are students of their breathing after the session?'}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="not_yet" current={breathingAwareness} setter={setBreathingAwareness} label="Not yet" icon="\u{1F636}" />
-            <Opt value="a_little" current={breathingAwareness} setter={setBreathingAwareness} label="A little" icon="\u{1F32C}" />
-            <Opt value="yes" current={breathingAwareness} setter={setBreathingAwareness} label="Yes, noticeably" icon="\u{1F9D8}" />
+            <Opt value="not_yet" current={breathingAwareness} setter={setBreathingAwareness} label="Not yet" icon={'\u{1F636}'} />
+            <Opt value="a_little" current={breathingAwareness} setter={setBreathingAwareness} label="A little" icon={'\u{1F32C}'} />
+            <Opt value="yes" current={breathingAwareness} setter={setBreathingAwareness} label="Yes, noticeably" icon={'\u{1F9D8}'} />
           </div>
         </Q>
 
         <Q label={isPre ? 'What\'s the overall energy level of the class?' : 'What\'s the energy level of the class now?'}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="low" current={energyLevel} setter={setEnergyLevel} label="Low / tired" icon="\u{1F634}" />
-            <Opt value="restless" current={energyLevel} setter={setEnergyLevel} label="Restless / fidgety" icon="\u{1F4A8}" />
-            <Opt value="calm" current={energyLevel} setter={setEnergyLevel} label="Calm" icon="\u{1F60C}" />
-            <Opt value="focused" current={energyLevel} setter={setEnergyLevel} label="Focused" icon="\u{1F3AF}" />
-            <Opt value="energized" current={energyLevel} setter={setEnergyLevel} label="Energized" icon="\u26A1" />
+            <Opt value="low" current={energyLevel} setter={setEnergyLevel} label="Low / tired" icon={'\u{1F634}'} />
+            <Opt value="restless" current={energyLevel} setter={setEnergyLevel} label="Restless / fidgety" icon={'\u{1F4A8}'} />
+            <Opt value="calm" current={energyLevel} setter={setEnergyLevel} label="Calm" icon={'\u{1F60C}'} />
+            <Opt value="focused" current={energyLevel} setter={setEnergyLevel} label="Focused" icon={'\u{1F3AF}'} />
+            <Opt value="energized" current={energyLevel} setter={setEnergyLevel} label="Energized" icon={'\u26A1'} />
           </div>
         </Q>
 
@@ -784,25 +784,25 @@ const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
           <>
             <Q label="How do students' bodies feel after the session?" sub="Based on what you observe or students shared">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="more_calm" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More calm" icon="\u{1F60C}" />
-                <Opt value="same" current={bodyFeelAfter} setter={setBodyFeelAfter} label="About the same" icon="\u{1F610}" />
-                <Opt value="more_awake" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More awake" icon="\u2728" />
-                <Opt value="something_else" current={bodyFeelAfter} setter={setBodyFeelAfter} label="Something else" icon="\u{1F914}" />
+                <Opt value="more_calm" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More calm" icon={'\u{1F60C}'} />
+                <Opt value="same" current={bodyFeelAfter} setter={setBodyFeelAfter} label="About the same" icon={'\u{1F610}'} />
+                <Opt value="more_awake" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More awake" icon={'\u2728'} />
+                <Opt value="something_else" current={bodyFeelAfter} setter={setBodyFeelAfter} label="Something else" icon={'\u{1F914}'} />
               </div>
             </Q>
             <Q label="Did students notice something new about their body today?">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="yes" current={noticedNew} setter={setNoticedNew} label="Yes, many did" icon="\u{1F4A1}" />
-                <Opt value="some" current={noticedNew} setter={setNoticedNew} label="Some did" icon="\u{1F64B}" />
-                <Opt value="not_really" current={noticedNew} setter={setNoticedNew} label="Not really" icon="\u{1F937}" />
+                <Opt value="yes" current={noticedNew} setter={setNoticedNew} label="Yes, many did" icon={'\u{1F4A1}'} />
+                <Opt value="some" current={noticedNew} setter={setNoticedNew} label="Some did" icon={'\u{1F64B}'} />
+                <Opt value="not_really" current={noticedNew} setter={setNoticedNew} label="Not really" icon={'\u{1F937}'} />
               </div>
             </Q>
             <Q label="How engaged were students during the session?">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="very" current={studentEngagement} setter={setStudentEngagement} label="Very engaged" icon="\u{1F929}" />
-                <Opt value="mostly" current={studentEngagement} setter={setStudentEngagement} label="Mostly engaged" icon="\u{1F642}" />
-                <Opt value="mixed" current={studentEngagement} setter={setStudentEngagement} label="Mixed" icon="\u{1F615}" />
-                <Opt value="low" current={studentEngagement} setter={setStudentEngagement} label="Low engagement" icon="\u{1F614}" />
+                <Opt value="very" current={studentEngagement} setter={setStudentEngagement} label="Very engaged" icon={'\u{1F929}'} />
+                <Opt value="mostly" current={studentEngagement} setter={setStudentEngagement} label="Mostly engaged" icon={'\u{1F642}'} />
+                <Opt value="mixed" current={studentEngagement} setter={setStudentEngagement} label="Mixed" icon={'\u{1F615}'} />
+                <Opt value="low" current={studentEngagement} setter={setStudentEngagement} label="Low engagement" icon={'\u{1F614}'} />
               </div>
             </Q>
             <Q label="Any notes or observations?" sub="Optional — anything you noticed that could help us improve">
