@@ -25,6 +25,14 @@ interface TeamPerson { name: string; title: string; emoji: string; image?: strin
 interface ChatMsg { role: 'user' | 'assistant'; text: string; modules?: Module[] }
 interface TeacherAuth { id: number; name: string; email: string; school: string; createdAt?: string }
 interface Resource { id: string; moduleId: string; title: string; description: string; fileUrl: string; fileType: 'pdf' | 'doc' | 'image' | 'other'; timing: 'before' | 'after' | 'both'; uploadedBy: string; createdAt: Date }
+interface PilotSurvey {
+  id: string; moduleId: string; timing: 'pre' | 'post'; educatorEmail: string
+  grade: string; studentCount: number; yogaBefore: string
+  bodyAwareness: string; breathingAwareness: string; energyLevel: string
+  // post-only
+  bodyFeelAfter?: string; noticedSomethingNew?: string; studentEngagement?: string; educatorNotes?: string
+  createdAt: Date
+}
 
 // Team Data
 const TEAM_SECTIONS: { label: string; color: string; people: TeamPerson[] }[] = [
@@ -116,6 +124,7 @@ let _feedback: Feedback[] = []
 let _teamInterest: TeamInterest[] = []
 let _modules: Module[] = [...SEED_MODULES, ...EDUCATOR_LIBRARY_MODULES]
 let _resources: Resource[] = [...SEED_RESOURCES]
+let _pilotSurveys: PilotSurvey[] = []
 
 // Scroll reveal hook
 const useReveal = () => {
@@ -661,6 +670,161 @@ const WhySection = () => {
 }
 
 // Module Page
+const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
+  mod: Module; timing: 'pre' | 'post'; onSubmit: (data: Omit<PilotSurvey, 'id' | 'createdAt'>) => void; onClose: () => void
+}) => {
+  const [grade, setGrade] = useState('')
+  const [studentCount, setStudentCount] = useState('')
+  const [yogaBefore, setYogaBefore] = useState('')
+  const [bodyAwareness, setBodyAwareness] = useState('')
+  const [breathingAwareness, setBreathingAwareness] = useState('')
+  const [energyLevel, setEnergyLevel] = useState('')
+  const [bodyFeelAfter, setBodyFeelAfter] = useState('')
+  const [noticedNew, setNoticedNew] = useState('')
+  const [studentEngagement, setStudentEngagement] = useState('')
+  const [educatorNotes, setEducatorNotes] = useState('')
+
+  const isPre = timing === 'pre'
+  const canSubmit = isPre
+    ? grade && studentCount && yogaBefore && bodyAwareness && breathingAwareness && energyLevel
+    : bodyAwareness && breathingAwareness && energyLevel && bodyFeelAfter && studentEngagement
+
+  const handleSubmit = () => {
+    if (!canSubmit) return
+    const teacher = (() => { try { const s = localStorage.getItem('sb_teacher'); return s ? JSON.parse(s) : null } catch { return null } })()
+    onSubmit({
+      moduleId: mod.id, timing, educatorEmail: teacher?.email || 'unknown',
+      grade, studentCount: parseInt(studentCount) || 0, yogaBefore,
+      bodyAwareness, breathingAwareness, energyLevel,
+      ...(timing === 'post' ? { bodyFeelAfter, noticedSomethingNew: noticedNew, studentEngagement, educatorNotes } : {}),
+    })
+  }
+
+  const Q = ({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) => (
+    <div style={{ marginBottom: 22 }}>
+      <label style={{ display: 'block', fontWeight: 700, fontSize: '0.92rem', color: C.ink, marginBottom: 4 }}>{label}</label>
+      {sub && <p style={{ fontSize: '0.78rem', color: '#999', marginBottom: 8 }}>{sub}</p>}
+      {children}
+    </div>
+  )
+
+  const Opt = ({ value, current, setter, label, icon }: { value: string; current: string; setter: (v: string) => void; label: string; icon?: string }) => (
+    <button type="button" onClick={() => setter(value)} style={{
+      padding: '10px 18px', borderRadius: 14, border: `2px solid ${current === value ? C.olive : C.sand}`,
+      background: current === value ? `${C.olive}10` : C.white, color: current === value ? C.olive : C.ink,
+      fontWeight: current === value ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+    }}>{icon && <span>{icon}</span>}{label}</button>
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+      <div style={{ position: 'relative', background: C.white, borderRadius: 24, maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto', padding: '36px 32px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: isPre ? `${C.saffron}14` : `${C.olive}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>{isPre ? '\u{1F4CB}' : '\u2728'}</div>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', color: C.ink, fontFamily: "'Playfair Display',serif", fontWeight: 800 }}>{isPre ? 'Pre-Session Check-In' : 'Post-Session Check-In'}</h2>
+            <p style={{ fontSize: '0.78rem', color: '#999' }}>{mod.title}</p>
+          </div>
+        </div>
+        <p style={{ fontSize: '0.88rem', color: '#777', lineHeight: 1.6, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${C.sand}` }}>
+          {isPre
+            ? 'Before starting the session, tell us about your classroom right now. This helps us measure the impact of the pilot.'
+            : 'The session is complete! Share how your students responded. Your feedback directly shapes the pilot.'}
+        </p>
+
+        {isPre && (
+          <>
+            <Q label="What grade are you teaching?" sub="Select the grade level of students in this session">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['K-2', '3-5', '6-8', '9-12'].map(g => <Opt key={g} value={g} current={grade} setter={setGrade} label={g} />)}
+              </div>
+            </Q>
+            <Q label="How many students are participating?">
+              <input className="input-field" type="number" min="1" max="200" placeholder="e.g. 25" value={studentCount} onChange={e => setStudentCount(e.target.value)} style={{ maxWidth: 140 }} />
+            </Q>
+            <Q label="Have your students done yoga or mindfulness before?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="never" current={yogaBefore} setter={setYogaBefore} label="Never" icon="\u{1F331}" />
+                <Opt value="a_few_times" current={yogaBefore} setter={setYogaBefore} label="A few times" icon="\u{1F33F}" />
+                <Opt value="regularly" current={yogaBefore} setter={setYogaBefore} label="Regularly" icon="\u{1F333}" />
+              </div>
+            </Q>
+          </>
+        )}
+
+        <Q label={isPre ? 'How aware are students of their bodies right now?' : 'How aware are students of their bodies after the session?'} sub="Based on what you observe in the classroom">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Opt value="not_yet" current={bodyAwareness} setter={setBodyAwareness} label="Not yet" icon="\u{1F636}" />
+            <Opt value="a_little" current={bodyAwareness} setter={setBodyAwareness} label="A little" icon="\u{1F914}" />
+            <Opt value="yes" current={bodyAwareness} setter={setBodyAwareness} label="Yes, noticeably" icon="\u{1F60C}" />
+          </div>
+        </Q>
+
+        <Q label={isPre ? 'How aware are students of their breathing right now?' : 'How aware are students of their breathing after the session?'}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Opt value="not_yet" current={breathingAwareness} setter={setBreathingAwareness} label="Not yet" icon="\u{1F636}" />
+            <Opt value="a_little" current={breathingAwareness} setter={setBreathingAwareness} label="A little" icon="\u{1F32C}" />
+            <Opt value="yes" current={breathingAwareness} setter={setBreathingAwareness} label="Yes, noticeably" icon="\u{1F9D8}" />
+          </div>
+        </Q>
+
+        <Q label={isPre ? 'What\'s the overall energy level of the class?' : 'What\'s the energy level of the class now?'}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Opt value="low" current={energyLevel} setter={setEnergyLevel} label="Low / tired" icon="\u{1F634}" />
+            <Opt value="restless" current={energyLevel} setter={setEnergyLevel} label="Restless / fidgety" icon="\u{1F4A8}" />
+            <Opt value="calm" current={energyLevel} setter={setEnergyLevel} label="Calm" icon="\u{1F60C}" />
+            <Opt value="focused" current={energyLevel} setter={setEnergyLevel} label="Focused" icon="\u{1F3AF}" />
+            <Opt value="energized" current={energyLevel} setter={setEnergyLevel} label="Energized" icon="\u26A1" />
+          </div>
+        </Q>
+
+        {!isPre && (
+          <>
+            <Q label="How do students' bodies feel after the session?" sub="Based on what you observe or students shared">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="more_calm" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More calm" icon="\u{1F60C}" />
+                <Opt value="same" current={bodyFeelAfter} setter={setBodyFeelAfter} label="About the same" icon="\u{1F610}" />
+                <Opt value="more_awake" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More awake" icon="\u2728" />
+                <Opt value="something_else" current={bodyFeelAfter} setter={setBodyFeelAfter} label="Something else" icon="\u{1F914}" />
+              </div>
+            </Q>
+            <Q label="Did students notice something new about their body today?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={noticedNew} setter={setNoticedNew} label="Yes, many did" icon="\u{1F4A1}" />
+                <Opt value="some" current={noticedNew} setter={setNoticedNew} label="Some did" icon="\u{1F64B}" />
+                <Opt value="not_really" current={noticedNew} setter={setNoticedNew} label="Not really" icon="\u{1F937}" />
+              </div>
+            </Q>
+            <Q label="How engaged were students during the session?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="very" current={studentEngagement} setter={setStudentEngagement} label="Very engaged" icon="\u{1F929}" />
+                <Opt value="mostly" current={studentEngagement} setter={setStudentEngagement} label="Mostly engaged" icon="\u{1F642}" />
+                <Opt value="mixed" current={studentEngagement} setter={setStudentEngagement} label="Mixed" icon="\u{1F615}" />
+                <Opt value="low" current={studentEngagement} setter={setStudentEngagement} label="Low engagement" icon="\u{1F614}" />
+              </div>
+            </Q>
+            <Q label="Any notes or observations?" sub="Optional — anything you noticed that could help us improve">
+              <textarea className="input-field" rows={3} placeholder="e.g. Students were calmer than usual after the breathing section..." value={educatorNotes} onChange={e => setEducatorNotes(e.target.value)} style={{ resize: 'vertical' }} />
+            </Q>
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', paddingTop: 20, borderTop: `1px solid ${C.sand}` }}>
+          <button onClick={onClose} style={{ padding: '12px 28px', borderRadius: 99, border: `1.5px solid ${C.sand}`, background: 'transparent', color: '#999', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer' }}>Skip</button>
+          <button onClick={handleSubmit} disabled={!canSubmit} style={{
+            padding: '12px 32px', borderRadius: 99, border: 'none',
+            background: canSubmit ? `linear-gradient(135deg,${C.olive},${C.oliveL})` : C.sand,
+            color: canSubmit ? 'white' : '#bbb', fontWeight: 700, fontSize: '0.88rem', cursor: canSubmit ? 'pointer' : 'default',
+            boxShadow: canSubmit ? `0 4px 16px ${C.olive}33` : 'none', transition: 'all 0.3s',
+          }}>Submit {isPre ? 'Pre' : 'Post'}-Survey</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const ModulePage = ({ mod, setPage }: { mod: Module; setPage: (p: string) => void }) => {
   const [reflection, setReflection] = useState('')
   const [completed, setCompleted] = useState(() => _progress.some(p => p.moduleId === mod.id && p.completed))
@@ -668,14 +832,62 @@ const ModulePage = ({ mod, setPage }: { mod: Module; setPage: (p: string) => voi
   const backTarget = 'home'
   const backLabel = 'Back to Library'
 
+  // Pilot survey state (educator modules only)
+  const isEducatorModule = mod.accessLevel === 'educator'
+  const hasPreSurvey = _pilotSurveys.some(s => s.moduleId === mod.id && s.timing === 'pre')
+  const hasPostSurvey = _pilotSurveys.some(s => s.moduleId === mod.id && s.timing === 'post')
+  const [showPreSurvey, setShowPreSurvey] = useState(isEducatorModule && !hasPreSurvey)
+  const [showPostSurvey, setShowPostSurvey] = useState(false)
+  const [surveyDismissed, setSurveyDismissed] = useState(false)
+
+  const submitSurvey = (data: Omit<PilotSurvey, 'id' | 'createdAt'>) => {
+    _pilotSurveys.push({ ...data, id: Date.now().toString(), createdAt: new Date() })
+    if (data.timing === 'pre') { setShowPreSurvey(false); setSurveyDismissed(false) }
+    else setShowPostSurvey(false)
+  }
+
   const markComplete = () => {
     if (!completed) {
       _progress.push({ id: Date.now().toString(), moduleId: mod.id, groupName: 'Classroom', completed: true, timeWatchedEstimate: mod.durationMinutes, createdAt: new Date() })
       setCompleted(true)
+      // Trigger post-survey for educator modules
+      if (isEducatorModule && !hasPostSurvey) setShowPostSurvey(true)
     }
   }
   return (
     <div className="fade-up container" style={{ paddingTop: 48, paddingBottom: 80, maxWidth: 820 }}>
+      {/* Pilot Survey Modals */}
+      {showPreSurvey && <PilotSurveyModal mod={mod} timing="pre" onSubmit={submitSurvey} onClose={() => { setShowPreSurvey(false); setSurveyDismissed(true) }} />}
+      {showPostSurvey && <PilotSurveyModal mod={mod} timing="post" onSubmit={submitSurvey} onClose={() => setShowPostSurvey(false)} />}
+
+      {/* Pre-survey reminder banner for educator modules */}
+      {isEducatorModule && !hasPreSurvey && surveyDismissed && (
+        <div style={{ background: `${C.saffron}10`, border: `1.5px solid ${C.saffron}30`, borderRadius: 16, padding: '16px 22px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '1.1rem' }}>{'\u{1F4CB}'}</span>
+          <span style={{ fontSize: '0.88rem', color: C.ink, flex: 1 }}>You skipped the pre-session survey. <strong>Complete it before playing the video</strong> for accurate pilot data.</span>
+          <button onClick={() => { setShowPreSurvey(true); setSurveyDismissed(false) }} style={{ padding: '8px 20px', borderRadius: 99, border: 'none', background: C.saffron, color: 'white', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>Take Survey</button>
+        </div>
+      )}
+
+      {/* Completed surveys indicator */}
+      {isEducatorModule && (hasPreSurvey || hasPostSurvey) && (
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          {hasPreSurvey && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 99, background: `${C.olive}10`, border: `1.5px solid ${C.olive}25` }}>
+              <span style={{ color: C.olive, fontSize: '0.82rem', fontWeight: 700 }}>{'\u2705'} Pre-survey completed</span>
+            </div>
+          )}
+          {hasPostSurvey && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 99, background: `${C.teal}10`, border: `1.5px solid ${C.teal}25` }}>
+              <span style={{ color: C.teal, fontSize: '0.82rem', fontWeight: 700 }}>{'\u2705'} Post-survey completed</span>
+            </div>
+          )}
+          {hasPreSurvey && completed && !hasPostSurvey && (
+            <button onClick={() => setShowPostSurvey(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 99, border: `1.5px solid ${C.teal}30`, background: `${C.teal}08`, color: C.teal, fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>{'\u{1F4DD}'} Complete Post-Survey</button>
+          )}
+        </div>
+      )}
+
       <button className="btn-ghost" onClick={() => setPage(backTarget)} style={{ marginBottom: 28 }}>
         <span style={{ marginRight: 6 }}>&larr;</span> {backLabel}
       </button>
@@ -1233,7 +1445,7 @@ const LoginPage = ({ onLogin }: { onLogin: (t: TeacherAuth) => void }) => {
 
 // Teacher Dashboard
 const TeacherDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'engagement' | 'resources'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'engagement' | 'pilot' | 'resources'>('overview')
   const [, forceUpdate] = useState(0)
   const completed = _progress.filter(p => p.completed)
   const totalTime = completed.reduce((s, p) => s + (p.timeWatchedEstimate || 0), 0)
@@ -1286,7 +1498,7 @@ const TeacherDashboard = () => {
     </div>
   )
 
-  const DashTab = ({ id, label }: { id: 'overview' | 'engagement' | 'resources'; label: string }) => (
+  const DashTab = ({ id, label }: { id: 'overview' | 'engagement' | 'pilot' | 'resources'; label: string }) => (
     <button onClick={() => setActiveTab(id)} style={{
       padding: '10px 24px', borderRadius: '99px', border: 'none',
       background: activeTab === id ? C.olive : 'transparent',
@@ -1306,6 +1518,7 @@ const TeacherDashboard = () => {
         <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content', flexWrap: 'wrap' }}>
           <DashTab id="overview" label="Overview" />
           <DashTab id="engagement" label="Student Engagement" />
+          <DashTab id="pilot" label={`Pilot Surveys (${_pilotSurveys.length})`} />
           <DashTab id="resources" label={`Materials (${_resources.length})`} />
         </div>
 
@@ -1490,6 +1703,226 @@ const TeacherDashboard = () => {
                           <p style={{ fontSize: '0.84rem', color: '#777', lineHeight: 1.6 }}>{insight.text}</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        )}
+
+        {activeTab === 'pilot' && (
+          <div>
+            <div style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: '1.5rem', color: C.ink, marginBottom: 6 }}>Pilot Impact Surveys</h2>
+              <p style={{ color: '#999', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: 600 }}>Pre and post session survey data collected from your educator video sessions. Track how students feel before and after.</p>
+            </div>
+
+            {_pilotSurveys.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 24px', background: C.white, borderRadius: 20, border: `1px solid ${C.sand}` }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: 16 }}>{'\u{1F4CB}'}</div>
+                <h3 style={{ color: C.ink, marginBottom: 8 }}>No survey data yet</h3>
+                <p style={{ color: '#999', fontSize: '0.9rem', maxWidth: 400, margin: '0 auto', lineHeight: 1.6 }}>When you play an educator video, you'll be prompted to complete pre and post session check-ins. That data will appear here.</p>
+              </div>
+            ) : (() => {
+              const preSurveys = _pilotSurveys.filter(s => s.timing === 'pre')
+              const postSurveys = _pilotSurveys.filter(s => s.timing === 'post')
+              const pairedModules = [...new Set(_pilotSurveys.map(s => s.moduleId))]
+
+              const countValues = (surveys: PilotSurvey[], field: keyof PilotSurvey) => {
+                const counts: Record<string, number> = {}
+                surveys.forEach(s => { const v = s[field] as string; if (v) counts[v] = (counts[v] || 0) + 1 })
+                return counts
+              }
+
+              const AWARENESS_LABELS: Record<string, { label: string; color: string }> = {
+                not_yet: { label: 'Not yet', color: '#ccc' }, a_little: { label: 'A little', color: C.saffron }, yes: { label: 'Yes, noticeably', color: C.olive },
+              }
+              const ENERGY_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+                low: { label: 'Low / tired', icon: '\u{1F634}', color: '#ccc' }, restless: { label: 'Restless', icon: '\u{1F4A8}', color: C.terra },
+                calm: { label: 'Calm', icon: '\u{1F60C}', color: C.teal }, focused: { label: 'Focused', icon: '\u{1F3AF}', color: C.olive },
+                energized: { label: 'Energized', icon: '\u26A1', color: C.saffron },
+              }
+              const BODY_AFTER_LABELS: Record<string, { label: string; icon: string }> = {
+                more_calm: { label: 'More calm', icon: '\u{1F60C}' }, same: { label: 'About the same', icon: '\u{1F610}' },
+                more_awake: { label: 'More awake', icon: '\u2728' }, something_else: { label: 'Something else', icon: '\u{1F914}' },
+              }
+              const ENGAGEMENT_LABELS: Record<string, { label: string; color: string }> = {
+                very: { label: 'Very engaged', color: C.olive }, mostly: { label: 'Mostly engaged', color: C.teal },
+                mixed: { label: 'Mixed', color: C.saffron }, low: { label: 'Low', color: C.terra },
+              }
+
+              const totalStudents = preSurveys.reduce((s, p) => s + p.studentCount, 0)
+
+              return (
+                <>
+                  {/* Overview cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(155px,1fr))', gap: 14, marginBottom: 32 }}>
+                    {[
+                      { label: 'Pre-Surveys', value: preSurveys.length, color: C.saffron, icon: '\u{1F4CB}' },
+                      { label: 'Post-Surveys', value: postSurveys.length, color: C.teal, icon: '\u2728' },
+                      { label: 'Sessions Covered', value: pairedModules.length, color: C.olive, icon: '\u{1F3AC}' },
+                      { label: 'Students Reached', value: totalStudents, color: C.terra, icon: '\u{1F465}' },
+                    ].map(s => (
+                      <div key={s.label} style={{ background: C.white, borderRadius: 16, padding: '20px 18px', border: `1px solid ${C.sand}`, textAlign: 'center' }}>
+                        <div style={{ fontSize: '1rem', marginBottom: 6 }}>{s.icon}</div>
+                        <div style={{ fontSize: '1.6rem', fontFamily: "'Playfair Display',serif", fontWeight: 900, color: s.color }}>{s.value}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#999', fontWeight: 500, marginTop: 2 }}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Before vs After comparison */}
+                  <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
+                    {/* Body Awareness shift */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Body Awareness Shift</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Before vs after session awareness</p>
+                      {['pre', 'post'].map(t => {
+                        const surveys = t === 'pre' ? preSurveys : postSurveys
+                        const counts = countValues(surveys, 'bodyAwareness')
+                        const total = surveys.length || 1
+                        return (
+                          <div key={t} style={{ marginBottom: 18 }}>
+                            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: t === 'pre' ? C.saffron : C.teal, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t === 'pre' ? 'Before' : 'After'}</p>
+                            <div style={{ display: 'flex', gap: 4, height: 28, borderRadius: 8, overflow: 'hidden' }}>
+                              {Object.entries(AWARENESS_LABELS).map(([k, v]) => {
+                                const pct = Math.round(((counts[k] || 0) / total) * 100)
+                                return pct > 0 ? (
+                                  <div key={k} title={`${v.label}: ${pct}%`} style={{ width: `${pct}%`, background: v.color, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'width 0.6s' }}>
+                                    {pct > 15 && <span style={{ color: 'white', fontSize: '0.68rem', fontWeight: 700 }}>{pct}%</span>}
+                                  </div>
+                                ) : null
+                              })}
+                            </div>
+                            <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
+                              {Object.entries(AWARENESS_LABELS).map(([k, v]) => (
+                                <span key={k} style={{ fontSize: '0.7rem', color: '#999', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: v.color, display: 'inline-block' }} />{v.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Energy Level shift */}
+                    <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                      <h3 style={{ color: C.teal, marginBottom: 6, fontSize: '1rem' }}>Energy Level Shift</h3>
+                      <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Classroom energy before vs after</p>
+                      {['pre', 'post'].map(t => {
+                        const surveys = t === 'pre' ? preSurveys : postSurveys
+                        const counts = countValues(surveys, 'energyLevel')
+                        return (
+                          <div key={t} style={{ marginBottom: 18 }}>
+                            <p style={{ fontSize: '0.78rem', fontWeight: 700, color: t === 'pre' ? C.saffron : C.teal, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>{t === 'pre' ? 'Before' : 'After'}</p>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {Object.entries(ENERGY_LABELS).map(([k, v]) => {
+                                const count = counts[k] || 0
+                                return (
+                                  <div key={k} style={{ padding: '8px 14px', borderRadius: 12, background: count > 0 ? `${v.color}10` : '#f8f8f8', border: `1.5px solid ${count > 0 ? `${v.color}30` : '#eee'}`, textAlign: 'center', minWidth: 70 }}>
+                                    <div style={{ fontSize: '0.9rem' }}>{v.icon}</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: 800, color: count > 0 ? v.color : '#ccc' }}>{count}</div>
+                                    <div style={{ fontSize: '0.65rem', color: '#999' }}>{v.label}</div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Post-session outcomes */}
+                  {postSurveys.length > 0 && (
+                    <div className="dash-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, marginBottom: 28 }}>
+                      <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                        <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>How Did Students Feel After?</h3>
+                        <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Educator-reported student body state post-session</p>
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          {Object.entries(BODY_AFTER_LABELS).map(([k, v]) => {
+                            const count = postSurveys.filter(s => s.bodyFeelAfter === k).length
+                            return (
+                              <div key={k} style={{ flex: '1 1 100px', textAlign: 'center', padding: '18px 10px', background: count > 0 ? `${C.olive}06` : '#fafafa', borderRadius: 16, border: `1px solid ${count > 0 ? `${C.olive}15` : '#eee'}` }}>
+                                <div style={{ fontSize: '1.4rem', marginBottom: 6 }}>{v.icon}</div>
+                                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: count > 0 ? C.olive : '#ccc', fontFamily: "'Playfair Display',serif" }}>{count}</div>
+                                <div style={{ fontSize: '0.72rem', color: '#999' }}>{v.label}</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}` }}>
+                        <h3 style={{ color: C.teal, marginBottom: 6, fontSize: '1rem' }}>Student Engagement Levels</h3>
+                        <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>How engaged were students during sessions</p>
+                        {Object.entries(ENGAGEMENT_LABELS).map(([k, v]) => {
+                          const count = postSurveys.filter(s => s.studentEngagement === k).length
+                          const pct = postSurveys.length > 0 ? Math.round((count / postSurveys.length) * 100) : 0
+                          return (
+                            <div key={k} style={{ marginBottom: 14 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: '0.84rem' }}>
+                                <span style={{ fontWeight: 600 }}>{v.label}</span>
+                                <span style={{ fontWeight: 700, color: v.color }}>{count} ({pct}%)</span>
+                              </div>
+                              <div style={{ height: 8, background: C.sand, borderRadius: 99, overflow: 'hidden' }}>
+                                <div style={{ height: 8, borderRadius: 99, background: v.color, width: `${pct}%`, transition: 'width 0.6s' }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Per-session detail */}
+                  <div style={{ background: C.white, borderRadius: 20, padding: 32, border: `1px solid ${C.sand}`, marginBottom: 28 }}>
+                    <h3 style={{ color: C.olive, marginBottom: 6, fontSize: '1rem' }}>Session-by-Session Detail</h3>
+                    <p style={{ fontSize: '0.78rem', color: '#bbb', marginBottom: 20 }}>Each survey response paired with its module</p>
+                    <div style={{ display: 'grid', gap: 14 }}>
+                      {pairedModules.map(modId => {
+                        const mod = _modules.find(m => m.id === modId)
+                        const pre = preSurveys.find(s => s.moduleId === modId)
+                        const post = postSurveys.find(s => s.moduleId === modId)
+                        return (
+                          <div key={modId} style={{ padding: '20px 22px', borderRadius: 16, border: `1px solid ${C.sand}`, background: `${C.olive}03` }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                              <span style={{ fontSize: '1rem' }}>{'\u{1F3AC}'}</span>
+                              <span style={{ fontWeight: 700, fontSize: '0.95rem', color: C.ink }}>{mod?.title || modId}</span>
+                              {pre && <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: 99, background: `${C.saffron}14`, color: C.saffron, fontWeight: 700 }}>Pre {'\u2705'}</span>}
+                              {post && <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: 99, background: `${C.teal}14`, color: C.teal, fontWeight: 700 }}>Post {'\u2705'}</span>}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: '0.82rem' }}>
+                              <div>
+                                <p style={{ fontWeight: 700, color: C.saffron, marginBottom: 6, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.5 }}>Before</p>
+                                {pre ? (
+                                  <div style={{ color: '#666', lineHeight: 1.8 }}>
+                                    <div>Grade: <strong>{pre.grade}</strong> &middot; {pre.studentCount} students</div>
+                                    <div>Yoga experience: <strong>{pre.yogaBefore.replace('_', ' ')}</strong></div>
+                                    <div>Body awareness: <strong>{AWARENESS_LABELS[pre.bodyAwareness]?.label}</strong></div>
+                                    <div>Breathing: <strong>{AWARENESS_LABELS[pre.breathingAwareness]?.label}</strong></div>
+                                    <div>Energy: <strong>{ENERGY_LABELS[pre.energyLevel]?.label}</strong></div>
+                                  </div>
+                                ) : <p style={{ color: '#ccc' }}>Not submitted</p>}
+                              </div>
+                              <div>
+                                <p style={{ fontWeight: 700, color: C.teal, marginBottom: 6, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.5 }}>After</p>
+                                {post ? (
+                                  <div style={{ color: '#666', lineHeight: 1.8 }}>
+                                    <div>Body awareness: <strong>{AWARENESS_LABELS[post.bodyAwareness]?.label}</strong></div>
+                                    <div>Breathing: <strong>{AWARENESS_LABELS[post.breathingAwareness]?.label}</strong></div>
+                                    <div>Energy: <strong>{ENERGY_LABELS[post.energyLevel]?.label}</strong></div>
+                                    <div>Feeling: <strong>{BODY_AFTER_LABELS[post.bodyFeelAfter || '']?.label || '—'}</strong></div>
+                                    <div>Engagement: <strong>{ENGAGEMENT_LABELS[post.studentEngagement || '']?.label || '—'}</strong></div>
+                                    {post.educatorNotes && <div style={{ marginTop: 6, fontStyle: 'italic', color: '#999' }}>"{post.educatorNotes}"</div>}
+                                  </div>
+                                ) : <p style={{ color: '#ccc' }}>Not submitted yet</p>}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </>
