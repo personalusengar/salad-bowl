@@ -2240,12 +2240,13 @@ const TeacherProfilePage = ({ teacher, setPage, onLogout, onUpdate }: {
 }
 
 // Admin Dashboard
-const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void }) => {
+const AdminDashboard = ({ setPage, setCurrentModule, teacher }: { setPage: (p: string) => void; setCurrentModule: (m: Module) => void; teacher: TeacherAuth }) => {
   const [activeTab, setActiveTab] = useState('analytics')
   const [filterRole, setFilterRole] = useState('all')
   const [, forceUpdate] = useState(0)
   const [dbFeedback, setDbFeedback] = useState<Feedback[]>([])
   const [dbTeam, setDbTeam] = useState<TeamInterest[]>([])
+  const [dbRegistrations, setDbRegistrations] = useState<{id: number; name: string; email: string; school: string; created_at: string}[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
   // Fetch persisted data from API (merge with in-memory)
@@ -2253,7 +2254,7 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
     let cancelled = false
     const load = async () => {
       try {
-        const [fbRes, tiRes] = await Promise.all([fetch('/api/feedback'), fetch('/api/team-interest')])
+        const [fbRes, tiRes, regRes] = await Promise.all([fetch('/api/feedback'), fetch('/api/team-interest'), fetch('/api/registrations', { headers: { 'X-Admin-Email': teacher?.email || '' } })])
         if (!cancelled && fbRes.ok) {
           const rows = await fbRes.json()
           setDbFeedback(rows.map((r: any) => ({ id: String(r.id), message: r.message, emotionalState: r.emotional_state, createdAt: new Date(r.created_at) })))
@@ -2261,6 +2262,10 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
         if (!cancelled && tiRes.ok) {
           const rows = await tiRes.json()
           setDbTeam(rows.map((r: any) => ({ id: String(r.id), name: r.name, email: r.email, role: r.interest_types || r.interest_type || '', organization: r.organization, contribution: r.contribution, excitement: r.excitement, skills: r.skills, wantsUpdates: r.wants_updates, phone: r.phone, createdAt: new Date(r.created_at) })))
+        }
+        if (!cancelled && regRes.ok) {
+          const data = await regRes.json()
+          setDbRegistrations(data.registrations || data || [])
         }
       } catch {}
       if (!cancelled) setLoadingData(false)
@@ -2310,7 +2315,7 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 32, background: C.sand, borderRadius: 99, padding: 5, width: 'fit-content', flexWrap: 'wrap' }}>
-          <Tab id="analytics" label="Analytics" /><Tab id="modules" label="Modules" /><Tab id="feedback" label="Feedback" /><Tab id="team" label="Team Interest" />
+          <Tab id="analytics" label="Analytics" /><Tab id="modules" label="Modules" /><Tab id="feedback" label="Feedback" /><Tab id="team" label="Team Interest" /><Tab id="registrations" label={`Registrations (${dbRegistrations.length})`} />
         </div>
 
         {activeTab === 'analytics' && (
@@ -2560,12 +2565,47 @@ const AdminDashboard = ({ setPage, setCurrentModule }: { setPage: (p: string) =>
               ))}
           </div>
         )}
+
+        {activeTab === 'registrations' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', color: C.ink, marginBottom: 4 }}>Educator Registrations</h2>
+                <p style={{ fontSize: '0.85rem', color: '#999' }}>{dbRegistrations.length} educator{dbRegistrations.length !== 1 ? 's' : ''} registered</p>
+              </div>
+              <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '8px 20px' }} onClick={() => {
+                const rows = [['ID', 'Name', 'Email', 'School', 'Registered']]
+                dbRegistrations.forEach(r => rows.push([String(r.id), r.name, r.email, r.school || '', r.created_at ? new Date(r.created_at).toLocaleDateString() : '']))
+                const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' })
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'registrations.csv'; a.click()
+              }}>Export CSV</button>
+            </div>
+            {loadingData ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#bbb' }}>Loading registrations...</div>
+            ) : dbRegistrations.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#bbb' }}><p>No registrations yet.</p></div>
+            ) : (
+              <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.sand}`, overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr 1.2fr 1fr 120px', padding: '14px 24px', background: `${C.olive}06`, borderBottom: `1px solid ${C.sand}`, fontWeight: 700, fontSize: '0.78rem', color: '#999', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <span>#</span><span>Name</span><span>Email</span><span>School</span><span>Registered</span>
+                </div>
+                {dbRegistrations.map((r, i) => (
+                  <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '50px 1fr 1.2fr 1fr 120px', padding: '16px 24px', borderBottom: i < dbRegistrations.length - 1 ? `1px solid ${C.sand}` : 'none', alignItems: 'center', fontSize: '0.88rem' }}>
+                    <span style={{ color: '#ccc', fontWeight: 600, fontSize: '0.8rem' }}>{r.id}</span>
+                    <span style={{ fontWeight: 600, color: C.ink }}>{r.name}</span>
+                    <span style={{ color: '#666' }}>{r.email}</span>
+                    <span style={{ color: '#999' }}>{r.school || '\u2014'}</span>
+                    <span style={{ color: '#999', fontSize: '0.82rem' }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '\u2014'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
-// Footer
 const Footer = ({ setPage, teamRef }: { setPage: (p: string) => void; teamRef: React.RefObject<HTMLDivElement> }) => {
   const scrollToTeam = () => {
     setPage('home')
@@ -2674,7 +2714,7 @@ export default function App() {
           {page === 'teacher' && !teacher && <LoginPage onLogin={handleLogin} />}
           {page === 'profile' && teacher && <TeacherProfilePage teacher={teacher} setPage={navigateTo} onLogout={handleLogout} onUpdate={handleProfileUpdate} />}
           {page === 'profile' && !teacher && <LoginPage onLogin={handleLogin} />}
-          {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} />}
+          {page === 'admin' && role === 'admin' && <AdminDashboard setPage={navigateTo} setCurrentModule={setCurrentModule} teacher={teacher!} />}
 
         </main>
         <Footer setPage={navigateTo} teamRef={teamRef} />
