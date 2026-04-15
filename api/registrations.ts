@@ -5,6 +5,11 @@ const ADMIN_EMAILS = ['urvi@saladbowl.life', 'akriti@saladbowl.life', 'admin@sal
 const getDbUrl = () => process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.saladbowl_DATABASE_URL || process.env.saladbowl_POSTGRES_URL || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Email');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   const adminEmail = req.headers['x-admin-email'] as string;
   if (!adminEmail || !ADMIN_EMAILS.includes(adminEmail.toLowerCase())) {
     return res.status(403).json({ error: 'Admin access required' });
@@ -13,7 +18,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const dbUrl = getDbUrl();
   if (!dbUrl) return res.status(500).json({ error: 'No database URL' });
 
-  const sql = neon(dbUrl);
-  const rows = await sql`SELECT id, name, email, school, created_at FROM teachers ORDER BY created_at DESC`;
-  return res.status(200).json(rows);
+  try {
+    const sql = neon(dbUrl);
+    const rows = await sql`SELECT id, name, email, school, created_at FROM teachers ORDER BY created_at DESC`;
+    return res.status(200).json({ registrations: rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Database error' });
+  }
 }

@@ -2272,7 +2272,7 @@ const AdminDashboard = ({ setPage, setCurrentModule, teacher }: { setPage: (p: s
     }
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [teacher?.email])
 
   // Merge DB + in-memory (deduplicate by checking if in-memory items already exist in DB)
   const allFeedback = [...dbFeedback, ..._feedback.filter(f => !dbFeedback.some(d => d.message === f.message))]
