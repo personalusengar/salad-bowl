@@ -29,7 +29,19 @@ interface PilotSurvey {
   id: string; moduleId: string; timing: 'pre' | 'post'; educatorEmail: string
   grade: string; studentCount: number; yogaBefore: string
   bodyAwareness: string; breathingAwareness: string; energyLevel: string
-  // post-only
+  // pre-only (new)
+  studentCountRange?: string; gradeLevels?: string[]; selFrequency?: string
+  reinforcementFrequency?: string; presenceLevel?: string
+  zoomComfort?: string; deviceUsed?: string; internetReliability?: string
+  // post-only — Core
+  postStudentCount?: string; postEngagement?: string; postWasPresent?: string; postSupportMethod?: string
+  // post-only — Zoom / Platform
+  postContentVisibility?: string; postAudioClarity?: string; postTechInterruptions?: string
+  // post-only — Educator as Bridge
+  postClarifyInstructions?: string; postStudentsRespondToYou?: string
+  // post-only — Content (Session 1)
+  postFollowBodyAwareness?: string; postComfortParticipating?: string; postBodyCues?: string
+  // legacy post fields (kept for compatibility)
   bodyFeelAfter?: string; noticedSomethingNew?: string; studentEngagement?: string; educatorNotes?: string
   createdAt: Date
 }
@@ -683,20 +695,50 @@ const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
   const [noticedNew, setNoticedNew] = useState('')
   const [studentEngagement, setStudentEngagement] = useState('')
   const [educatorNotes, setEducatorNotes] = useState('')
+  // New post-session survey state
+  const [postStudentCount, setPostStudentCount] = useState('')
+  const [postEngagement, setPostEngagement] = useState('')
+  const [postWasPresent, setPostWasPresent] = useState('')
+  const [postSupportMethod, setPostSupportMethod] = useState('')
+  const [postContentVisibility, setPostContentVisibility] = useState('')
+  const [postAudioClarity, setPostAudioClarity] = useState('')
+  const [postTechInterruptions, setPostTechInterruptions] = useState('')
+  const [postClarifyInstructions, setPostClarifyInstructions] = useState('')
+  const [postStudentsRespondToYou, setPostStudentsRespondToYou] = useState('')
+  const [postFollowBodyAwareness, setPostFollowBodyAwareness] = useState('')
+  const [postComfortParticipating, setPostComfortParticipating] = useState('')
+  const [postBodyCues, setPostBodyCues] = useState('')
+  // New pre-session survey state
+  const [studentCountRange, setStudentCountRange] = useState('')
+  const [gradeLevels, setGradeLevels] = useState<string[]>([])
+  const [selFrequency, setSelFrequency] = useState('')
+  const [reinforcementFrequency, setReinforcementFrequency] = useState('')
+  const [presenceLevel, setPresenceLevel] = useState('')
+  const [zoomComfort, setZoomComfort] = useState('')
+  const [deviceUsed, setDeviceUsed] = useState('')
+  const [internetReliability, setInternetReliability] = useState('')
+  const toggleGrade = (g: string) => setGradeLevels(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
 
   const isPre = timing === 'pre'
   const canSubmit = isPre
-    ? grade && studentCount && yogaBefore && bodyAwareness && breathingAwareness && energyLevel
-    : bodyAwareness && breathingAwareness && energyLevel && bodyFeelAfter && studentEngagement
+    ? studentCountRange && gradeLevels.length > 0 && selFrequency && reinforcementFrequency && presenceLevel && zoomComfort && deviceUsed && internetReliability
+    : postStudentCount && postEngagement && postWasPresent && postSupportMethod && postContentVisibility && postAudioClarity && postTechInterruptions && postClarifyInstructions && postStudentsRespondToYou && postFollowBodyAwareness && postComfortParticipating && postBodyCues
 
   const handleSubmit = () => {
     if (!canSubmit) return
     const teacher = (() => { try { const s = localStorage.getItem('sb_teacher'); return s ? JSON.parse(s) : null } catch { return null } })()
     onSubmit({
       moduleId: mod.id, timing, educatorEmail: teacher?.email || 'unknown',
-      grade, studentCount: parseInt(studentCount) || 0, yogaBefore,
-      bodyAwareness, breathingAwareness, energyLevel,
-      ...(timing === 'post' ? { bodyFeelAfter, noticedSomethingNew: noticedNew, studentEngagement, educatorNotes } : {}),
+      grade: gradeLevels.join(', '), studentCount: parseInt(postStudentCount) || 0, yogaBefore: '',
+      bodyAwareness: '', breathingAwareness: '', energyLevel: '',
+      ...(timing === 'pre' ? { studentCountRange, gradeLevels, selFrequency, reinforcementFrequency, presenceLevel, zoomComfort, deviceUsed, internetReliability } : {}),
+      ...(timing === 'post' ? {
+        postStudentCount, postEngagement, postWasPresent, postSupportMethod,
+        postContentVisibility, postAudioClarity, postTechInterruptions,
+        postClarifyInstructions, postStudentsRespondToYou,
+        postFollowBodyAwareness, postComfortParticipating, postBodyCues,
+        studentEngagement: postEngagement,
+      } : {}),
     })
   }
 
@@ -736,77 +778,171 @@ const PilotSurveyModal = ({ mod, timing, onSubmit, onClose }: {
 
         {isPre && (
           <>
-            <Q label="What grade are you teaching?" sub="Select the grade level of students in this session">
+            {/* Section 1: Context */}
+            <div style={{ marginBottom: 8 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Section 1: Context</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Number of students expected">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {['K-2', '3-5', '6-8', '9-12'].map(g => <Opt key={g} value={g} current={grade} setter={setGrade} label={g} />)}
+                {['1\u20135', '6\u201310', '11\u201315', '16+'].map(r => <Opt key={r} value={r} current={studentCountRange} setter={setStudentCountRange} label={r} />)}
               </div>
             </Q>
-            <Q label="How many students are participating?">
-              <input className="input-field" type="number" min="1" max="200" placeholder="e.g. 25" value={studentCount} onChange={e => setStudentCount(e.target.value)} style={{ maxWidth: 140 }} />
-            </Q>
-            <Q label="Have your students done yoga or mindfulness before?">
+            <Q label="Grade level" sub="Can select more than 1 option">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="never" current={yogaBefore} setter={setYogaBefore} label="Never" icon={'\u{1F331}'} />
-                <Opt value="a_few_times" current={yogaBefore} setter={setYogaBefore} label="A few times" icon={'\u{1F33F}'} />
-                <Opt value="regularly" current={yogaBefore} setter={setYogaBefore} label="Regularly" icon={'\u{1F333}'} />
+                {['K\u20131', '2\u20133', '4\u20135', 'Other'].map(g => (
+                  <button key={g} type="button" onClick={() => toggleGrade(g)} style={{
+                    padding: '10px 18px', borderRadius: 14, border: `2px solid ${gradeLevels.includes(g) ? C.olive : C.sand}`,
+                    background: gradeLevels.includes(g) ? `${C.olive}10` : C.white, color: gradeLevels.includes(g) ? C.olive : C.ink,
+                    fontWeight: gradeLevels.includes(g) ? 700 : 500, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s',
+                  }}>{g}</button>
+                ))}
+              </div>
+            </Q>
+            <Q label="Frequency of SEL/mindfulness activities currently">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['never','Never'], ['rarely','Rarely'], ['sometimes','Sometimes'], ['often','Often'], ['very_often','Very often']] as const).map(([v,l]) => <Opt key={v} value={v} current={selFrequency} setter={setSelFrequency} label={l} />)}
+              </div>
+            </Q>
+
+            {/* Section 2: Adult Role */}
+            <div style={{ marginBottom: 8, marginTop: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Section 2: Adult Role</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="How often do you reinforce self-regulation strategies?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['never','Never'], ['rarely','Rarely'], ['sometimes','Sometimes'], ['often','Often'], ['very_often','Very often']] as const).map(([v,l]) => <Opt key={v} value={v} current={reinforcementFrequency} setter={setReinforcementFrequency} label={l} />)}
+              </div>
+            </Q>
+            <Q label="Will you be present for sessions?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['all','All'], ['most','Most'], ['some','Some'], ['none','None']] as const).map(([v,l]) => <Opt key={v} value={v} current={presenceLevel} setter={setPresenceLevel} label={l} />)}
+              </div>
+            </Q>
+
+            {/* Section 3: Platform Readiness */}
+            <div style={{ marginBottom: 8, marginTop: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Section 3: Platform Readiness</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Comfort with Zoom-based sessions">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['not_comfortable','Not comfortable'], ['slightly','Slightly'], ['moderately','Moderately'], ['very','Very']] as const).map(([v,l]) => <Opt key={v} value={v} current={zoomComfort} setter={setZoomComfort} label={l} />)}
+              </div>
+            </Q>
+            <Q label="Device used">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['laptop','Laptop \u{1F4BB}'], ['desktop','Desktop \u{1F5A5}'], ['tablet','Tablet \u{1F4F1}'], ['other','Other']] as const).map(([v,l]) => <Opt key={v} value={v} current={deviceUsed} setter={setDeviceUsed} label={l} />)}
+              </div>
+            </Q>
+            <Q label="Internet reliability">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {([['poor','Poor'], ['fair','Fair'], ['good','Good'], ['very_good','Very good']] as const).map(([v,l]) => <Opt key={v} value={v} current={internetReliability} setter={setInternetReliability} label={l} />)}
               </div>
             </Q>
           </>
         )}
 
-        <Q label={isPre ? 'How aware are students of their bodies right now?' : 'How aware are students of their bodies after the session?'} sub="Based on what you observe in the classroom">
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="not_yet" current={bodyAwareness} setter={setBodyAwareness} label="Not yet" icon={'\u{1F636}'} />
-            <Opt value="a_little" current={bodyAwareness} setter={setBodyAwareness} label="A little" icon={'\u{1F914}'} />
-            <Opt value="yes" current={bodyAwareness} setter={setBodyAwareness} label="Yes, noticeably" icon={'\u{1F60C}'} />
-          </div>
-        </Q>
-
-        <Q label={isPre ? 'How aware are students of their breathing right now?' : 'How aware are students of their breathing after the session?'}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="not_yet" current={breathingAwareness} setter={setBreathingAwareness} label="Not yet" icon={'\u{1F636}'} />
-            <Opt value="a_little" current={breathingAwareness} setter={setBreathingAwareness} label="A little" icon={'\u{1F32C}'} />
-            <Opt value="yes" current={breathingAwareness} setter={setBreathingAwareness} label="Yes, noticeably" icon={'\u{1F9D8}'} />
-          </div>
-        </Q>
-
-        <Q label={isPre ? 'What\'s the overall energy level of the class?' : 'What\'s the energy level of the class now?'}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Opt value="low" current={energyLevel} setter={setEnergyLevel} label="Low / tired" icon={'\u{1F634}'} />
-            <Opt value="restless" current={energyLevel} setter={setEnergyLevel} label="Restless / fidgety" icon={'\u{1F4A8}'} />
-            <Opt value="calm" current={energyLevel} setter={setEnergyLevel} label="Calm" icon={'\u{1F60C}'} />
-            <Opt value="focused" current={energyLevel} setter={setEnergyLevel} label="Focused" icon={'\u{1F3AF}'} />
-            <Opt value="energized" current={energyLevel} setter={setEnergyLevel} label="Energized" icon={'\u26A1'} />
-          </div>
-        </Q>
-
         {!isPre && (
           <>
-            <Q label="How do students' bodies feel after the session?" sub="Based on what you observe or students shared">
+            {/* Core */}
+            <div style={{ marginBottom: 8 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Core</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Number of students present">
+              <input className="input-field" type="number" min="1" max="200" placeholder="e.g. 25" value={postStudentCount} onChange={e => setPostStudentCount(e.target.value)} style={{ maxWidth: 140 }} />
+            </Q>
+            <Q label="Student engagement">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="more_calm" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More calm" icon={'\u{1F60C}'} />
-                <Opt value="same" current={bodyFeelAfter} setter={setBodyFeelAfter} label="About the same" icon={'\u{1F610}'} />
-                <Opt value="more_awake" current={bodyFeelAfter} setter={setBodyFeelAfter} label="More awake" icon={'\u2728'} />
-                <Opt value="something_else" current={bodyFeelAfter} setter={setBodyFeelAfter} label="Something else" icon={'\u{1F914}'} />
+                {([['very_low','Very low'], ['low','Low'], ['moderate','Moderate'], ['high','High'], ['very_high','Very high']] as const).map(([v,l]) => <Opt key={v} value={v} current={postEngagement} setter={setPostEngagement} label={l} />)}
               </div>
             </Q>
-            <Q label="Did students notice something new about their body today?">
+            <Q label="Were you present?">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="yes" current={noticedNew} setter={setNoticedNew} label="Yes, many did" icon={'\u{1F4A1}'} />
-                <Opt value="some" current={noticedNew} setter={setNoticedNew} label="Some did" icon={'\u{1F64B}'} />
-                <Opt value="not_really" current={noticedNew} setter={setNoticedNew} label="Not really" icon={'\u{1F937}'} />
+                <Opt value="yes" current={postWasPresent} setter={setPostWasPresent} label="Yes" />
+                <Opt value="no" current={postWasPresent} setter={setPostWasPresent} label="No" />
               </div>
             </Q>
-            <Q label="How engaged were students during the session?">
+            <Q label="How did you support students?">
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Opt value="very" current={studentEngagement} setter={setStudentEngagement} label="Very engaged" icon={'\u{1F929}'} />
-                <Opt value="mostly" current={studentEngagement} setter={setStudentEngagement} label="Mostly engaged" icon={'\u{1F642}'} />
-                <Opt value="mixed" current={studentEngagement} setter={setStudentEngagement} label="Mixed" icon={'\u{1F615}'} />
-                <Opt value="low" current={studentEngagement} setter={setStudentEngagement} label="Low engagement" icon={'\u{1F614}'} />
+                {([['participated','Participated alongside'], ['encouraged','Encouraged verbally'], ['clarified','Clarified instructions'], ['managed','Managed behavior'], ['minimal','Minimal involvement']] as const).map(([v,l]) => <Opt key={v} value={v} current={postSupportMethod} setter={setPostSupportMethod} label={l} />)}
               </div>
             </Q>
-            <Q label="Any notes or observations?" sub="Optional — anything you noticed that could help us improve">
-              <textarea className="input-field" rows={3} placeholder="e.g. Students were calmer than usual after the breathing section..." value={educatorNotes} onChange={e => setEducatorNotes(e.target.value)} style={{ resize: 'vertical' }} />
+
+            {/* Zoom / Platform */}
+            <div style={{ marginBottom: 8, marginTop: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Zoom / Platform</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Content visibility">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postContentVisibility} setter={setPostContentVisibility} label="Yes" />
+                <Opt value="mostly" current={postContentVisibility} setter={setPostContentVisibility} label="Mostly" />
+                <Opt value="no" current={postContentVisibility} setter={setPostContentVisibility} label="No" />
+              </div>
+            </Q>
+            <Q label="Audio clarity">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postAudioClarity} setter={setPostAudioClarity} label="Yes" />
+                <Opt value="some_issues" current={postAudioClarity} setter={setPostAudioClarity} label="Some issues" />
+                <Opt value="no" current={postAudioClarity} setter={setPostAudioClarity} label="No" />
+              </div>
+            </Q>
+            <Q label="Tech interruptions">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="multiple" current={postTechInterruptions} setter={setPostTechInterruptions} label="Multiple" />
+                <Opt value="1_2" current={postTechInterruptions} setter={setPostTechInterruptions} label="1\u20132" />
+                <Opt value="none" current={postTechInterruptions} setter={setPostTechInterruptions} label="None" />
+              </div>
+            </Q>
+
+            {/* Educator as Bridge */}
+            <div style={{ marginBottom: 8, marginTop: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Educator as Bridge</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Did you clarify instructions from the video?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="multiple_times" current={postClarifyInstructions} setter={setPostClarifyInstructions} label="Multiple times" />
+                <Opt value="once_or_twice" current={postClarifyInstructions} setter={setPostClarifyInstructions} label="Once or twice" />
+                <Opt value="no" current={postClarifyInstructions} setter={setPostClarifyInstructions} label="No" />
+              </div>
+            </Q>
+            <Q label="Did students respond more to you than the video?">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postStudentsRespondToYou} setter={setPostStudentsRespondToYou} label="Yes" />
+                <Opt value="no" current={postStudentsRespondToYou} setter={setPostStudentsRespondToYou} label="No" />
+                <Opt value="not_sure" current={postStudentsRespondToYou} setter={setPostStudentsRespondToYou} label="Not sure" />
+              </div>
+            </Q>
+
+            {/* Content (Session 1 specific) */}
+            <div style={{ marginBottom: 8, marginTop: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', color: C.olive, fontWeight: 800, marginBottom: 4 }}>Content (Session 1)</h3>
+              <div style={{ height: 2, width: 40, background: C.olive, borderRadius: 2, marginBottom: 18 }} />
+            </div>
+            <Q label="Students were able to follow body awareness activities">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postFollowBodyAwareness} setter={setPostFollowBodyAwareness} label="Yes" />
+                <Opt value="somewhat" current={postFollowBodyAwareness} setter={setPostFollowBodyAwareness} label="Somewhat" />
+                <Opt value="no" current={postFollowBodyAwareness} setter={setPostFollowBodyAwareness} label="No" />
+              </div>
+            </Q>
+            <Q label="Students appeared comfortable participating">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postComfortParticipating} setter={setPostComfortParticipating} label="Yes" />
+                <Opt value="somewhat" current={postComfortParticipating} setter={setPostComfortParticipating} label="Somewhat" />
+                <Opt value="no" current={postComfortParticipating} setter={setPostComfortParticipating} label="No" />
+              </div>
+            </Q>
+            <Q label="Students noticed or responded to body-based cues">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Opt value="yes" current={postBodyCues} setter={setPostBodyCues} label="Yes" />
+                <Opt value="somewhat" current={postBodyCues} setter={setPostBodyCues} label="Somewhat" />
+                <Opt value="no" current={postBodyCues} setter={setPostBodyCues} label="No" />
+              </div>
             </Q>
           </>
         )}
@@ -1898,11 +2034,14 @@ const TeacherDashboard = () => {
                                 <p style={{ fontWeight: 700, color: C.saffron, marginBottom: 6, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.5 }}>Before</p>
                                 {pre ? (
                                   <div style={{ color: '#666', lineHeight: 1.8 }}>
-                                    <div>Grade: <strong>{pre.grade}</strong> &middot; {pre.studentCount} students</div>
-                                    <div>Yoga experience: <strong>{pre.yogaBefore.replace('_', ' ')}</strong></div>
-                                    <div>Body awareness: <strong>{AWARENESS_LABELS[pre.bodyAwareness]?.label}</strong></div>
-                                    <div>Breathing: <strong>{AWARENESS_LABELS[pre.breathingAwareness]?.label}</strong></div>
-                                    <div>Energy: <strong>{ENERGY_LABELS[pre.energyLevel]?.label}</strong></div>
+                                    <div>Grade: <strong>{pre.gradeLevels?.join(', ') || pre.grade}</strong></div>
+                                    <div>Students: <strong>{pre.studentCountRange || pre.studentCount}</strong></div>
+                                    {pre.selFrequency && <div>SEL frequency: <strong>{pre.selFrequency.replace('_', ' ')}</strong></div>}
+                                    {pre.reinforcementFrequency && <div>Self-regulation reinforcement: <strong>{pre.reinforcementFrequency.replace('_', ' ')}</strong></div>}
+                                    {pre.presenceLevel && <div>Presence for sessions: <strong>{pre.presenceLevel}</strong></div>}
+                                    {pre.zoomComfort && <div>Zoom comfort: <strong>{pre.zoomComfort.replace('_', ' ')}</strong></div>}
+                                    {pre.deviceUsed && <div>Device: <strong>{pre.deviceUsed}</strong></div>}
+                                    {pre.internetReliability && <div>Internet: <strong>{pre.internetReliability.replace('_', ' ')}</strong></div>}
                                   </div>
                                 ) : <p style={{ color: '#ccc' }}>Not submitted</p>}
                               </div>
@@ -1910,12 +2049,18 @@ const TeacherDashboard = () => {
                                 <p style={{ fontWeight: 700, color: C.teal, marginBottom: 6, textTransform: 'uppercase', fontSize: '0.72rem', letterSpacing: 0.5 }}>After</p>
                                 {post ? (
                                   <div style={{ color: '#666', lineHeight: 1.8 }}>
-                                    <div>Body awareness: <strong>{AWARENESS_LABELS[post.bodyAwareness]?.label}</strong></div>
-                                    <div>Breathing: <strong>{AWARENESS_LABELS[post.breathingAwareness]?.label}</strong></div>
-                                    <div>Energy: <strong>{ENERGY_LABELS[post.energyLevel]?.label}</strong></div>
-                                    <div>Feeling: <strong>{BODY_AFTER_LABELS[post.bodyFeelAfter || '']?.label || '—'}</strong></div>
-                                    <div>Engagement: <strong>{ENGAGEMENT_LABELS[post.studentEngagement || '']?.label || '—'}</strong></div>
-                                    {post.educatorNotes && <div style={{ marginTop: 6, fontStyle: 'italic', color: '#999' }}>"{post.educatorNotes}"</div>}
+                                    {post.postStudentCount && <div>Students present: <strong>{post.postStudentCount}</strong></div>}
+                                    {post.postEngagement && <div>Engagement: <strong>{post.postEngagement.replace('_', ' ')}</strong></div>}
+                                    {post.postWasPresent && <div>Present: <strong>{post.postWasPresent}</strong></div>}
+                                    {post.postSupportMethod && <div>Support: <strong>{post.postSupportMethod.replace('_', ' ')}</strong></div>}
+                                    {post.postContentVisibility && <div>Content visible: <strong>{post.postContentVisibility}</strong></div>}
+                                    {post.postAudioClarity && <div>Audio: <strong>{post.postAudioClarity.replace('_', ' ')}</strong></div>}
+                                    {post.postTechInterruptions && <div>Tech issues: <strong>{post.postTechInterruptions.replace('_', ' ')}</strong></div>}
+                                    {post.postClarifyInstructions && <div>Clarified instructions: <strong>{post.postClarifyInstructions.replace('_', ' ')}</strong></div>}
+                                    {post.postStudentsRespondToYou && <div>Responded to educator: <strong>{post.postStudentsRespondToYou.replace('_', ' ')}</strong></div>}
+                                    {post.postFollowBodyAwareness && <div>Followed body awareness: <strong>{post.postFollowBodyAwareness}</strong></div>}
+                                    {post.postComfortParticipating && <div>Comfortable participating: <strong>{post.postComfortParticipating}</strong></div>}
+                                    {post.postBodyCues && <div>Body-based cues: <strong>{post.postBodyCues}</strong></div>}
                                   </div>
                                 ) : <p style={{ color: '#ccc' }}>Not submitted yet</p>}
                               </div>
